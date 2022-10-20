@@ -110,10 +110,10 @@ class Promotion(db.Model):
         return cls.query.all()
 
     @classmethod
-    def find(cls, by_id):
+    def find(cls, promotion_id):
         """ Finds a Promotion by it's ID """
-        logger.info("Processing lookup for id %s ...", by_id)
-        return cls.query.get(by_id)
+        logger.info("Processing lookup for id %s ...", promotion_id)
+        return cls.query.get(promotion_id)
 
     @classmethod
     def find_by_name(cls, name):

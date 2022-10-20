@@ -8,7 +8,7 @@ from flask import jsonify, request, url_for, make_response, abort
 from service.models import Promotion
 from service.common import status  # HTTP Status Codes
 from . import app  # Import Flask application
-
+from werkzeug.exceptions import NotFound
 
 ######################################################################
 # GET INDEX
@@ -53,24 +53,41 @@ def check_content_type(media_type):
 @app.route("/promotions", methods=["GET"])
 def list_promotions():
     """Returns all of the Promotions"""
-    pass
 
+    app.logger.info("Request for Promotions list")
+    all_promotions = []
+
+    # Process the query string if any
+    name = request.args.get("name")
+    if name:
+        all_promotions = Promotion.find_by_name(name)
+    else:
+        all_promotions = Promotion.all()
+
+    # Return as an array of dictionaries
+    results = [promo.serialize() for promo in all_promotions]
+
+    return make_response(jsonify(results), status.HTTP_200_OK)
 
 ######################################################################
 # RETRIEVE A Promotion
 ######################################################################
-@app.route("/accounts/<int:account_id>", methods=["GET"])
-def get_promotion(account_id):
+@app.route("/promotions/<int:promotion_id>", methods=["GET"])
+def get_promotion(promotion_id):
     """
     Retrieve a single Promotion
     This endpoint will return an Promotion based on it's id
     """
-    pass
-
+    app.logger.info("Request for promotion with id: %s", promotion_id)
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        raise NotFound("Promotion with id '{}' was not found.".format(promotion_id))
+    return make_response(jsonify(promotion.serialize()), status.HTTP_200_OK)
 
 ######################################################################
 # CREATE A NEW Promotion
 ######################################################################
+
 @app.route("/promotions", methods=["POST"])
 def create_promotion():
     """
