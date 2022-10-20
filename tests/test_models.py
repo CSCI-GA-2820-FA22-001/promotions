@@ -1,40 +1,139 @@
 """
-Test cases for YourResourceModel Model
+Test cases for Promotion Model
 
 """
+from itertools import product
 import os
 import logging
 import unittest
-from service.models import YourResourceModel, DataValidationError, db
+from service.models import Promotion, DataValidationError, db
+from service import app
+
+
+DATABASE_URI = os.getenv(
+    "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
+)
 
 ######################################################################
 #  <your resource name>   M O D E L   T E S T   C A S E S
 ######################################################################
-class TestYourResourceModel(unittest.TestCase):
-    """ Test Cases for YourResourceModel Model """
+class TestPromotion(unittest.TestCase):
+    """ Test Cases for Promotion Model """
 
     @classmethod
     def setUpClass(cls):
         """ This runs once before the entire test suite """
-        pass
+        app.config["TESTING"] = True
+        app.config["DEBUG"] = False
+        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.logger.setLevel(logging.CRITICAL)
+        Promotion.init_db(app)
 
     @classmethod
     def tearDownClass(cls):
         """ This runs once after the entire test suite """
-        pass
+        db.session.close()
 
     def setUp(self):
         """ This runs before each test """
-        pass
+        db.session.query(Promotion).delete()  # clean up the last tests
+        db.session.commit()
 
     def tearDown(self):
         """ This runs after each test """
-        pass
+        db.session.remove()
 
     ######################################################################
     #  T E S T   C A S E S
     ######################################################################
 
-    def test_XXXX(self):
-        """ It should always be true """
-        self.assertTrue(True)
+    def test_create_promotion(self):
+        prom = Promotion(name="Promo1",products="Furniture",type="Percent",value=20,active=True)
+        self.assertEqual(prom.name,"Promo1")
+        self.assertEqual(prom.products,"Furniture")
+        self.assertEqual(prom.type,"Percent")
+        self.assertEqual(prom.value,20)
+        self.assertTrue(prom.active)
+        self.assertTrue(prom is not None)
+
+        promos = Promotion.all()
+        self.assertEqual([],promos)
+        self.assertEqual(prom.id, None)
+        prom.create()
+        self.assertIsNotNone(prom.id)
+        promos = Promotion.all()
+        self.assertEqual(len(promos), 1)
+        print(repr(promos))
+        #self.assertEqual(repr(promos),)
+
+    def test_update_promotion(self):
+        prom = Promotion(name="Promo1",products="Furniture",type="Percent",value=20,active=True)
+        prom.create()
+        initial_id = prom.id
+        prom.name = "Promo2"
+        prom.update()
+        self.assertEqual(prom.id, initial_id)
+        self.assertEqual(prom.name,"Promo2")
+
+    def test_delete_promotion(self):
+        prom = Promotion(name="Promo1",products="Furniture",type="Percent",value=20,active=True)
+        prom.create()
+        self.assertEqual(len(Promotion.all()), 1)
+        prom.delete()
+        self.assertEqual(len(Promotion.all()), 0)
+
+    def test_serialize_deserialize_promotion(self):
+        prom = Promotion(name="Promo1",products="Furniture",type="Percent",value=20,active=True)
+        data= prom.serialize()
+        self.assertNotEqual(data, None)
+        self.assertIn("id", data)
+        self.assertEqual(data["id"], prom.id)
+        self.assertIn("name", data)
+        self.assertEqual(data["name"], prom.name)
+        self.assertIn("products", data)
+        self.assertEqual(data["products"], prom.products)
+        self.assertIn("type", data)
+        self.assertEqual(data["type"], prom.type)
+        self.assertIn("value", data)
+        self.assertEqual(data["value"], prom.value)
+
+        data["name"]="Promo2"
+        data["products"]="Electronics"
+        data["value"]=10
+        prom.deserialize(data)
+        self.assertEqual(prom.name,"Promo2")
+        self.assertEqual(prom.products,"Electronics")
+        self.assertEqual(prom.value,10)
+
+        #test invalid deserial:
+        invalid_data = "..."
+        prom2 = Promotion()
+        self.assertRaises(TypeError, prom2.deserialize, invalid_data)
+
+        #test missing
+        missing_data = {"id": 1, "name": "Promotion"}
+        prom3 = Promotion()
+        self.assertRaises(DataValidationError, prom2.deserialize, missing_data)
+    
+    def test_find_promos(self):
+        prom1 = Promotion(name="Promo1",products="Furniture",type="Percent",value=20,active=True)
+        prom2 = Promotion(name="Promo2",products="Electronics",type="Flat",value=30,active=False)
+        prom3 = Promotion(name="Promo3",products="Consumables",type="Percent",value=40,active=True)
+        prom1.create()
+        prom2.create()
+        prom3.create()
+        self.assertEqual(len(Promotion.all()),3)
+
+        #find by id
+        search2 = Promotion.find(prom2.id)
+        self.assertIsNot(search2, None)
+        self.assertEqual(search2.name, prom2.name)
+
+        #find by name
+        search3 = Promotion.find_by_name("Promo3")
+        self.assertIsNot(search2, None)
+        self.assertEqual(search3[0].name, prom3.name)
+        self.assertEqual(search3[0].products, prom3.products)
+
+
+
