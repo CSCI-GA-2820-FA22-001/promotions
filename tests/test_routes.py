@@ -90,28 +90,62 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
         self.assertEqual(new_promotion["active"], test_promotion.active, "active status does not match")
 
-        def test_get_promotion(self):
-            """ Get a single Promotion """
-            # get the id of a promotion
-            test_promotion = self._create_promotions(1)[0]
-            resp = self.app.get(
-                "/promotions/{}".format(test_promotion.id), content_type="application/json"
-            )
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
-            data = resp.get_json()
-            self.assertEqual(data["name"], test_promotion.name)
+    def test_get_promotion(self):
+        """ Get a single Promotion """
+        # get the id of a promotion
+        test_promotion = self._create_promotions(1)[0]
+        resp = self.app.get(
+            "/promotions/{}".format(test_promotion.id), content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], test_promotion.name)
         
-        def test_list_promotion(self):
-            """ List all promotions in the database """
-            # create two promotions
-            test_promotion00 = self._create_promotions(1)[0]
-            test_promotion01 = self._create_promotions(1)[0]
+    def test_list_promotion(self):
+        """ List all promotions in the database """
+        # create two promotions
+        test_promotion00 = self._create_promotions(1)[0]
+        test_promotion01 = self._create_promotions(1)[0]
 
-            # if it gets 200 status, we pass
-            resp = self.app.get("/promotions")
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        # if it gets 200 status, we pass
+        resp = self.app.get("/promotions")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-            # check that the ID of test promos match JSON returned
-            data = resp.get_json()
-            self.assertEqual(data[0]['id'], test_promotion00.id)
-            self.assertEqual(data[1]['id'], test_promotion01.id)
+        # check that the ID of test promos match JSON returned
+        data = resp.get_json()
+        self.assertEqual(data[0]['id'], test_promotion00.id)
+        self.assertEqual(data[1]['id'], test_promotion01.id)
+        
+    def test_update_promotion(self):
+        """ Update an existing Promotion """
+        # create a promotion to update
+        test_promotion = PromotionFactory()
+        resp = self.app.post(
+            "/promotions", json=test_promotion.serialize(), content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        # update the promotion
+        new_promotion = resp.get_json()
+        new_promotion["name"] = "dummy_promo"
+        resp = self.app.put(
+            "/promotions/{}".format(new_promotion["id"]),
+            json=new_promotion,
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_promotion = resp.get_json()
+        self.assertEqual(updated_promotion["name"], "dummy_promo")
+
+    def test_delete_promotion(self):
+        """ Delete a Promotion """
+        test_promotion = self._create_promotions(1)[0]
+        resp = self.app.delete(
+            "/promotions/{}".format(test_promotion.id), content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(resp.data), 0)
+        # make sure they are deleted
+        resp = self.app.get(
+            "/promotions/{}".format(test_promotion.id), content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
