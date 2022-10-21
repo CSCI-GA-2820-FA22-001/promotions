@@ -94,6 +94,7 @@ class TestPromotionRoutes(unittest.TestCase):
         """ Get a single Promotion """
         # get the id of a promotion
         test_promotion = self._create_promotions(1)[0]
+        logging.debug(test_promotion)
         resp = self.app.get(
             "/promotions/{}".format(test_promotion.id), content_type="application/json"
         )
@@ -120,6 +121,7 @@ class TestPromotionRoutes(unittest.TestCase):
         """ Update an existing Promotion """
         # create a promotion to update
         test_promotion = PromotionFactory()
+        logging.debug(test_promotion)
         resp = self.app.post(
             "/promotions", json=test_promotion.serialize(), content_type="application/json"
         )
@@ -139,6 +141,7 @@ class TestPromotionRoutes(unittest.TestCase):
     def test_delete_promotion(self):
         """ Delete a Promotion """
         test_promotion = self._create_promotions(1)[0]
+        logging.debug(test_promotion)
         resp = self.app.delete(
             "/promotions/{}".format(test_promotion.id), content_type="application/json"
         )
@@ -149,3 +152,21 @@ class TestPromotionRoutes(unittest.TestCase):
             "/promotions/{}".format(test_promotion.id), content_type="application/json"
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_bad_request(self):
+        """It should not Create when sending the wrong data"""
+        resp = self.app.post("/promotions", json={"name": "not enough data"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.app.put("/promotions", json={"not": "today"})
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_unsupported_media_type(self):
+        """It should not Create when sending wrong media type"""
+        account = PromotionFactory()
+        resp = self.app.post(
+            "/promotions", json=account.serialize(), content_type="test/html"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
