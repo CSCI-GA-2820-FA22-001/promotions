@@ -155,3 +155,17 @@ def delete_promotion(promotion_id):
         promotion.delete()
 
     return make_response("", status.HTTP_204_NO_CONTENT)
+
+
+
+######################################################################
+# Health check for Kube
+######################################################################
+@app.route("/health", methods=["GET"])
+def check_health():
+    return (
+        jsonify(
+            status="OK",
+        ),
+        status.HTTP_200_OK,
+    )
