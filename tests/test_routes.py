@@ -116,6 +116,7 @@ class TestPromotionRoutes(unittest.TestCase):
         data = resp.get_json()
         self.assertEqual(data[0]['id'], test_promotion00.id)
         self.assertEqual(data[1]['id'], test_promotion01.id)
+
         
     def test_update_promotion(self):
         """ Update an existing Promotion """
@@ -137,6 +138,14 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         updated_promotion = resp.get_json()
         self.assertEqual(updated_promotion["name"], "dummy_promo")
+
+        #try to update invalid promotion
+        invalid_resp = self.app.put(
+            "/promotions/9999",
+            json=new_promotion,
+            content_type="application/json",
+        )
+        self.assertEqual(invalid_resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_promotion(self):
         """ Delete a Promotion """
@@ -170,3 +179,8 @@ class TestPromotionRoutes(unittest.TestCase):
             "/promotions", json=account.serialize(), content_type="test/html"
         )
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_health_check(self):
+        """health endpoint should return {"status":"OK}, 200"""
+        resp = self.app.get("/health")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
