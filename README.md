@@ -25,5 +25,31 @@ delete_promotion   DELETE   /promotions/<promotion_id>
 
 The test cases have 95% test coverage and can be run with `nosetests`
 
+
+## Deployment
+
+- Open in DevContainer 
+
+`make login` Logs into ibmcloud
+
+`kubectl get all` See everything thats running
+
+`kubectl get svc ` See services
+
+`ibmcloud ks workers --cluster nyu-devops`  Get public ip of Kube worker node
+
+Runs on `WORKERNODE_PUBLIC_IP:31000`
+
+### On first deploy:
+`kubectl apply -f deploy/postgresql.yaml` 
+Deploys postgres db 
+
+`kubectl create -f deploy/deployment.yaml`		Deploys app using our promotions image, creates deployment, replicaset and pods	
+
+`kubectl create -f deploy/service.yaml` Make accessible through service
+
+
+
+
 ## License
 
