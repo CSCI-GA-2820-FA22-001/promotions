@@ -62,6 +62,9 @@ class TestPromotionRoutes(unittest.TestCase):
             )
             new_promotion = resp.get_json()
             test_promotion.id = new_promotion["id"]
+            test_promotion.active = new_promotion["active"]
+            test_promotion.type = new_promotion["type"]
+            test_promotion.value = new_promotion["value"]
             promotions.append(test_promotion)
         return promotions
 
@@ -117,7 +120,43 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(data[0]['id'], test_promotion00.id)
         self.assertEqual(data[1]['id'], test_promotion01.id)
 
-        
+
+    def test_list_promotion_by_type(self):
+        # get the type of a promotion
+        test_promotion_type = self._create_promotions(1)[0]
+        logging.debug(test_promotion_type)
+        resp = self.app.get("/promotions", query_string="type={}".format(test_promotion_type.type))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['type'], test_promotion_type.type)
+
+    def test_list_promotion_by_value(self):
+        # get the type of a promotion
+        test_promotion_value = self._create_promotions(1)[0]
+        logging.debug(test_promotion_value)
+        resp = self.app.get("/promotions", query_string="value={}".format(test_promotion_value.value))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['value'], test_promotion_value.value)
+
+    def test_list_promotion_by_name(self):
+        # get the type of a promotion
+        test_promotion_name = self._create_promotions(1)[0]
+        logging.debug(test_promotion_name)
+        resp = self.app.get("/promotions", query_string="name={}".format(test_promotion_name.name))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['name'], test_promotion_name.name)
+
+    def test_list_promotion_by_active(self):
+        # get the type of a promotion
+        test_promotion_active = self._create_promotions(1)[0]
+        logging.debug(test_promotion_active)
+        resp = self.app.get("/promotions", query_string="active={}".format(test_promotion_active.active))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['active'], test_promotion_active.active)
+
     def test_update_promotion(self):
         """ Update an existing Promotion """
         # create a promotion to update
