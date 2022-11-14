@@ -124,3 +124,34 @@ class Promotion(db.Model):
         """
         logger.info("Processing name query for %s ...", name)
         return cls.query.filter(cls.name == name)
+
+    @classmethod
+    def find_by_type(cls, type):
+        """Returns all Promotions with the given type
+
+        Args:
+            type (string): the type of the Promotions you want to match
+        """
+        logger.info("Processing type query for %s ...", type)
+        return cls.query.filter(cls.type == type).all()
+
+    @classmethod
+    def find_by_value(cls, value):
+        """Returns all Promotions with the given value
+
+        Args:
+            value (Integer): the type of the Promotions you want to match
+        """
+        logger.info("Processing value query for %s ...", value)
+        return cls.query.filter(cls.value == value).all()
+
+    @classmethod
+    def find_by_active(cls, active):
+        """Returns all Promotions with the given active status
+
+        Args:
+            active (boolean): the type of the Promotions you want to match
+        """
+        logger.info("Processing active query for %s ...", active)
+        return cls.query.filter(cls.active == active).all()
+    

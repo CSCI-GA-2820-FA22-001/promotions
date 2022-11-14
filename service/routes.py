@@ -59,8 +59,18 @@ def list_promotions():
 
     # Process the query string if any
     name = request.args.get("name")
+    type = request.args.get("type")
+    value = request.args.get("value")
+    active = request.args.get("active")
+
     if name:
         all_promotions = Promotion.find_by_name(name)
+    elif type:
+        all_promotions = Promotion.find_by_type(type)
+    elif value:
+        all_promotions = Promotion.find_by_value(value)
+    elif active:
+        all_promotions = Promotion.find_by_active(active)
     else:
         all_promotions = Promotion.all()
 
