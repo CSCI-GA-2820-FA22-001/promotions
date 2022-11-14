@@ -30,7 +30,7 @@ The test cases have 95% test coverage and can be run with `nosetests`
 
 - Open in DevContainer 
 
-`make login` Logs into ibmcloud
+`make login` Logs into ibmcloud (you must have your api key in your host ~/.bluemix/apikey.json to be mounted by dev container)
 
 `kubectl get all` See everything thats running
 
