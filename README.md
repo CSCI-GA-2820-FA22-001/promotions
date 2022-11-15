@@ -41,6 +41,8 @@ The test cases have 95% test coverage and can be run with `nosetests`
 Runs on `WORKERNODE_PUBLIC_IP:31000`
 
 ### On first deploy:
+`make build`
+
 `kubectl apply -f deploy/postgresql.yaml` 
 Deploys postgres db 
 
