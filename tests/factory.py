@@ -17,7 +17,7 @@ class PromotionFactory(factory.Factory):
         """
         "id": self.id, 
         "name": self.name,
-        "products": self.products,
+        "product_id": self.product_id,
         "type": self.type,
         "value": self.value,
         "active": self.active
@@ -27,8 +27,7 @@ class PromotionFactory(factory.Factory):
 
     name = factory.Sequence(lambda n: 'Promotion{}'.format(n))
 
-    products = random.choice(["milk","eggs","cheese","fruit","frozen foods","water",
-    "alcohol","yogurt","steak","bacon","all"])
+    product_id = random.randint(0, 100000)
 
     type = random.choice(["BOGO","Flat","Percentage"])
 

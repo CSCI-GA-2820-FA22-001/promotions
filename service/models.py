@@ -28,7 +28,8 @@ class Promotion(db.Model):
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
-    products = db.Column(db.String(63), nullable=False) #Affected product type. Can be "All"
+    # products = db.Column(db.String(63), nullable=False) #Affected product type. Can be "All"
+    product_id = db.Column(db.Integer, nullable = False)
     type = db.Column(db.String(63), nullable=False) #Types: BOGO, Flat, Percentage
     value = db.Column(db.Integer, default=0) #0 for Bogo
     active = db.Column(db.Boolean(), nullable=False, default=False)
@@ -40,6 +41,9 @@ class Promotion(db.Model):
         """
         Creates a Promotion to the database
         """
+        if self.product_id is None:
+            raise DataValidationError("Product Id cannot be empty")
+
         logger.info("Creating %s", self.name)
         self.id = None  # id must be none to generate next primary key
         db.session.add(self)
@@ -49,6 +53,13 @@ class Promotion(db.Model):
         """
         Updates a Promotion to the database
         """
+
+        if not self.id or not isinstance(self.id, int):
+            raise DataValidationError("Update called with invalid id field")
+
+        if self.product_id is None or not isinstance(self.product_id, int):
+            raise DataValidationError("Product Id is not valid")
+
         logger.info("Saving %s", self.name)
         db.session.commit()
 
@@ -63,7 +74,7 @@ class Promotion(db.Model):
         return {
             "id": self.id, 
             "name": self.name,
-            "products": self.products,
+            "product_id": self.product_id,
             "type": self.type,
             "value": self.value,
             "active": self.active
@@ -77,11 +88,17 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
+
+            self.product_id = data["product_id"]
+            # check if product id is Integer
+            if self.product_id is None or not isinstance(self.product_id, int):
+                raise DataValidationError("Product Id must be an Integer")
+
             self.name = data["name"]
-            self.products = data["products"]
             self.type = data["type"]
             self.value = data["value"]
             self.active = data["active"]
+
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Promotion: missing " + error.args[0]
@@ -155,3 +172,10 @@ class Promotion(db.Model):
         logger.info("Processing active query for %s ...", active)
         return cls.query.filter(cls.active == active).all()
     
+
+
+    @classmethod
+    def find_by_product_id(cls, product_id: int):
+        """Returns the promotion with product_id: product_id """
+        logger.info("Processing product_id query for %s ...", product_id)
+        return cls.query.filter(cls.product_id == product_id).all()
