@@ -171,8 +171,6 @@ class Promotion(db.Model):
         """
         logger.info("Processing active query for %s ...", active)
         return cls.query.filter(cls.active == active).all()
-    
-
 
     @classmethod
     def find_by_product_id(cls, product_id: int):
