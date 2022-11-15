@@ -169,23 +169,6 @@ def delete_promotion(promotion_id):
     return make_response("", status.HTTP_204_NO_CONTENT)
 
 ######################################################################
-# Get a promotion associated with a product id
-######################################################################
-# @app.route("/promotions/<int:product_id>", methods=["GET"])
-# def get_promotion_for_product(product_id):
-#     """Returns a  promotion associated with a product_id
-#     Args:
-#         product_id (int): the id of the product
-#     Returns:
-#         Promotion Id
-#     """
-#     app.logger.info("Request for promotion with product_id: %s", product_id)
-#     promotion = Promotion.find_by_product_id(product_id)
-#     if not promotion:
-#         raise NotFound("Promotion with product id '{}' was not found.".format(product_id))
-#     return make_response(jsonify(promotion.serialize()), status.HTTP_200_OK)
-
-######################################################################
 # Health check for Kube
 ######################################################################
 @app.route("/health", methods=["GET"])
