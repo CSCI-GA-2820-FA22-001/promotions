@@ -232,3 +232,34 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data[0]['product_id'], test_promotion_prod_id.product_id)
+
+
+    def test_activate_promotion(self):
+        """ Activate an existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #Deactivate the promotion
+        test_promotion.active = False
+        # activate the promotion using service
+        resp_activate = self.app.put(
+            "/promotions/{}/activate".format(test_promotion.id),
+            content_type="application/json"
+        )
+
+        self.assertEqual(resp_activate.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_activate.get_json()['active'], True)
+
+    def test_deactivate_promotion(self):
+        """ Deactivate an existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #activate the promotion
+        test_promotion.active = True
+        # deactivate the promotion using endpoint
+        resp_deactivate = self.app.put(
+            "/promotions/{}/deactivate".format(test_promotion.id),
+            content_type="application/json"
+        )
+
+        self.assertEqual(resp_deactivate.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_deactivate.get_json()['active'], False)

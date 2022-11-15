@@ -179,3 +179,37 @@ def check_health():
         ),
         status.HTTP_200_OK,
     )
+
+######################################################################
+# Action Endpoint to Activate the Resource
+######################################################################
+@app.route("/promotions/<int:promotion_id>/activate", methods=["PUT"])
+def activate_promotion(promotion_id):
+    """
+        Activate a Promotion
+        This endpoint will activate a Promotion
+    """
+    app.logger.info('Request to activate promotion with id: %s', promotion_id)
+    promotion = Promotion.find(promotion_id)
+    if promotion == None:
+        app.abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+    promotion.active = True
+    promotion.update()
+    return promotion.serialize(), status.HTTP_200_OK
+
+######################################################################
+# Action Endpoint to Deactivate the Resource
+######################################################################
+@app.route("/promotions/<int:promotion_id>/deactivate", methods=["PUT"])
+def deactivate_promotion(promotion_id):
+    """
+        Deactivate a Promotion
+        This endpoint will deactivate a Promotion
+    """
+    app.logger.info('Request to deactivate promotion with id: %s', promotion_id)
+    promotion = Promotion.find(promotion_id)
+    if promotion == None:
+        app.abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+    promotion.active = False
+    promotion.update()
+    return promotion.serialize(), status.HTTP_200_OK
