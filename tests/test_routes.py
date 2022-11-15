@@ -65,6 +65,7 @@ class TestPromotionRoutes(unittest.TestCase):
             test_promotion.active = new_promotion["active"]
             test_promotion.type = new_promotion["type"]
             test_promotion.value = new_promotion["value"]
+            test_promotion.product_id = new_promotion["product_id"]
             promotions.append(test_promotion)
         return promotions
 
@@ -119,7 +120,6 @@ class TestPromotionRoutes(unittest.TestCase):
         data = resp.get_json()
         self.assertEqual(data[0]['id'], test_promotion00.id)
         self.assertEqual(data[1]['id'], test_promotion01.id)
-
 
     def test_list_promotion_by_type(self):
         # get the type of a promotion
@@ -223,3 +223,12 @@ class TestPromotionRoutes(unittest.TestCase):
         """health endpoint should return {"status":"OK}, 200"""
         resp = self.app.get("/health")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_list_promotion_by_product_id(self):
+        # get the product id of a promotion
+        test_promotion_prod_id = self._create_promotions(1)[0]
+        logging.debug(test_promotion_prod_id)
+        resp = self.app.get("/promotions", query_string="product_id={}".format(test_promotion_prod_id.product_id))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['product_id'], test_promotion_prod_id.product_id)

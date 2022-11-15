@@ -62,9 +62,11 @@ def list_promotions():
     type = request.args.get("type")
     value = request.args.get("value")
     active = request.args.get("active")
-
+    product_id = request.args.get("product_id")
     if name:
         all_promotions = Promotion.find_by_name(name)
+    elif product_id:
+        all_promotions = Promotion.find_by_product_id(product_id)
     elif type:
         all_promotions = Promotion.find_by_type(type)
     elif value:
@@ -165,8 +167,6 @@ def delete_promotion(promotion_id):
         promotion.delete()
 
     return make_response("", status.HTTP_204_NO_CONTENT)
-
-
 
 ######################################################################
 # Health check for Kube
