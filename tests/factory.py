@@ -4,7 +4,8 @@ Test Factory to make fake objects for testing
 """
 
 import factory
-from service.models import Promotion
+from service.models import Promotion, PromotionType
+from factory.fuzzy import FuzzyChoice
 import random
 
 class PromotionFactory(factory.Factory):
@@ -30,7 +31,7 @@ class PromotionFactory(factory.Factory):
     product_id = random.randint(0, 100000)
 
     type = random.choice(["BOGO","Flat","Percentage"])
-
+    type = FuzzyChoice(choices=[PromotionType.BOGO, PromotionType.PERCENTAGE, PromotionType.FIXED])
     if type == "BOGO":
         value = 0
     else:
