@@ -6,7 +6,7 @@ from itertools import product
 import os
 import logging
 import unittest
-from service.models import Promotion, DataValidationError, db
+from service.models import Promotion,PromotionType, DataValidationError, db
 from service import app
 
 
@@ -48,10 +48,10 @@ class TestPromotion(unittest.TestCase):
     ######################################################################
 
     def test_create_promotion(self):
-        prom = Promotion(name="Promo1",product_id=1,type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",product_id=1,type=PromotionType.PERCENTAGE,value=20,active=True)
         self.assertEqual(prom.name,"Promo1")
         self.assertEqual(prom.product_id,1)
-        self.assertEqual(prom.type,"Percent")
+        self.assertEqual(prom.type,PromotionType.PERCENTAGE)
         self.assertEqual(prom.value,20)
         self.assertTrue(prom.active)
         self.assertTrue(prom is not None)
@@ -68,11 +68,11 @@ class TestPromotion(unittest.TestCase):
 
     def create_promotion_with_no_product_id(self):
         """ Create an promotion with no product id """
-        prom = Promotion(name="Promo1",type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",type=PromotionType.PERCENTAGE,value=20,active=True)
         self.assertRaises(DataValidationError, prom.create)
 
     def test_update_promotion(self):
-        prom = Promotion(name="Promo1",product_id=1,type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True)
         prom.create()
         initial_id = prom.id
         prom.name = "Promo2"
@@ -82,25 +82,25 @@ class TestPromotion(unittest.TestCase):
 
     def test_update_promotion_with_no_prod_id(self):
         """ Update a promotion with no product id """
-        prom = Promotion(name="Promo1",type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",type=PromotionType.FIXED,value=20,active=True)
         prom.id=1
         self.assertRaises(DataValidationError, prom.update)
 
     def test_update_promotion_with_no_id(self):
         """ Update a promotion with no id """
-        prom = Promotion(name="Promo1",type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",type=PromotionType.BOGO,value=20,active=True)
         prom.id= None
         self.assertRaises(DataValidationError, prom.update)
 
     def test_delete_promotion(self):
-        prom = Promotion(name="Promo1",product_id=1,type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True)
         prom.create()
         self.assertEqual(len(Promotion.all()), 1)
         prom.delete()
         self.assertEqual(len(Promotion.all()), 0)
 
     def test_serialize_deserialize_promotion(self):
-        prom = Promotion(name="Promo1",product_id=1,type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True)
         data= prom.serialize()
         self.assertNotEqual(data, None)
         self.assertIn("id", data)
@@ -110,7 +110,7 @@ class TestPromotion(unittest.TestCase):
         self.assertIn("product_id", data)
         self.assertEqual(data["product_id"], prom.product_id)
         self.assertIn("type", data)
-        self.assertEqual(data["type"], prom.type)
+        self.assertEqual(data["type"], prom.type.name)
         self.assertIn("value", data)
         self.assertEqual(data["value"], prom.value)
 
@@ -133,14 +133,14 @@ class TestPromotion(unittest.TestCase):
         self.assertRaises(DataValidationError, prom3.deserialize, missing_data)
 
     def test_deserialize_with_missing_product_id(self):
-        prom = Promotion(name="Promo1",type="Percent",value=20,active=True)
+        prom = Promotion(name="Promo1",type=PromotionType.BOGO,value=20,active=True)
         data= prom.serialize()
         self.assertRaises(DataValidationError, prom.deserialize, data)
 
     def test_find_promos(self):
-        prom1 = Promotion(name="Promo1",product_id=1,type="Percent",value=20,active=True)
-        prom2 = Promotion(name="Promo2",product_id=2,type="Flat",value=30,active=False)
-        prom3 = Promotion(name="Promo3",product_id=3,type="Percent",value=40,active=True)
+        prom1 = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True)
+        prom2 = Promotion(name="Promo2",product_id=2,type=PromotionType.FIXED,value=30,active=False)
+        prom3 = Promotion(name="Promo3",product_id=3,type=PromotionType.PERCENTAGE,value=40,active=True)
         prom1.create()
         prom2.create()
         prom3.create()

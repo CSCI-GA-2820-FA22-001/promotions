@@ -1,11 +1,18 @@
 """
 Models for Promotion
 
+Promotion - A Promotion used in the eCommerce website
+- id: (int) primary key
+- name: (str) the name of the promotion
+- product_id: (str) the product id associated with this promotion
+- promo_type: (str or enum) [BOGO | DISCOUNT | FIXED]
+- value: (int) the amount of the promotion base on promotion type
+
 All of the models are stored in this module
 """
 import logging
 from flask_sqlalchemy import SQLAlchemy
-
+from enum import Enum
 logger = logging.getLogger("flask.app")
 
 # Create the SQLAlchemy object to be initialized later in init_db()
@@ -15,7 +22,12 @@ db = SQLAlchemy()
 class DataValidationError(Exception):
     """ Used for an data validation errors when deserializing """
 
-    pass
+
+class PromotionType(Enum):
+    """Enumeration of valid Promotion Types"""
+    BOGO = 1 #Buy one get one free
+    PERCENTAGE = 2 # percentage off the price
+    FIXED = 3 #flat amount off the price
 
 
 class Promotion(db.Model):
@@ -28,9 +40,8 @@ class Promotion(db.Model):
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
-    # products = db.Column(db.String(63), nullable=False) #Affected product type. Can be "All"
     product_id = db.Column(db.Integer, nullable = False)
-    type = db.Column(db.String(63), nullable=False) #Types: BOGO, Flat, Percentage
+    type = db.Column(db.Enum(PromotionType), nullable=False) #Types: BOGO, Flat, Percentage
     value = db.Column(db.Integer, default=0) #0 for Bogo
     active = db.Column(db.Boolean(), nullable=False, default=False)
 
@@ -75,7 +86,7 @@ class Promotion(db.Model):
             "id": self.id, 
             "name": self.name,
             "product_id": self.product_id,
-            "type": self.type,
+            "type": self.type.name,
             "value": self.value,
             "active": self.active
         }
@@ -95,7 +106,7 @@ class Promotion(db.Model):
                 raise DataValidationError("Product Id must be an Integer")
 
             self.name = data["name"]
-            self.type = data["type"]
+            self.type = getattr(PromotionType, data["type"])
             self.value = data["value"]
             self.active = data["active"]
 
