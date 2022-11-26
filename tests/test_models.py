@@ -126,9 +126,9 @@ class TestPromotion(unittest.TestCase):
         self.assertIn("value", data)
         self.assertEqual(data["value"], prom.value)
         self.assertIn("start", data)
-        self.assertEqual(data["start"], prom.start_date)
+        self.assertEqual(datetime.fromisoformat(data["start"]), prom.start_date)
         self.assertIn("end", data)
-        self.assertEqual(data["end"], prom.expiration_date)
+        self.assertEqual(datetime.fromisoformat(data["end"]), prom.expiration_date)
 
         data["name"]="Promo2"
         data["product_id"]=2
@@ -153,7 +153,8 @@ class TestPromotion(unittest.TestCase):
         self.assertRaises(DataValidationError, prom3.deserialize, missing_data)
 
     def test_deserialize_with_missing_product_id(self):
-        prom = Promotion(name="Promo1",type=PromotionType.BOGO,value=20,active=True)
+        prom = Promotion(name="Promo1",type=PromotionType.BOGO,value=20,active=True,
+        start_date = datetime(2022, 5, 10), expiration_date = datetime(2022, 5, 20))
         data= prom.serialize()
         self.assertRaises(DataValidationError, prom.deserialize, data)
 

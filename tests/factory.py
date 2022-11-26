@@ -41,6 +41,5 @@ class PromotionFactory(factory.Factory):
         value = random.choice([5,10,15,20,25, 30])
     
     active = False
-
     start_date = factory.Sequence(lambda n: datetime.now() + timedelta(days = n - 20))
     expiration_date = factory.Sequence(lambda n: datetime.now() + timedelta(days = n - 10))

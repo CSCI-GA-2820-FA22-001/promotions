@@ -96,8 +96,8 @@ class Promotion(db.Model):
             "type": self.type.name,
             "value": self.value,
             "active": self.active,
-            "start": self.from_date.isoformat(),
-            "end": self.to_date.isoformat(),
+            "start": self.start_date.isoformat(),
+            "end": self.expiration_date.isoformat(),
         }
 
     def deserialize(self, data):
@@ -120,7 +120,7 @@ class Promotion(db.Model):
             self.active = data["active"]
 
              # convert str to datetime
-            if data["start_date"] and isinstance(data["start"], str):
+            if data["start"] and isinstance(data["start"], str):
                 try:
                     self.start_date = datetime.fromisoformat(data["start"])
                 except ValueError:
@@ -130,11 +130,11 @@ class Promotion(db.Model):
 
             if data["end"] and isinstance(data["end"], str):
                 try:
-                    self.expiration_date = datetime.fromisoformat(data["end_date"])
+                    self.expiration_date = datetime.fromisoformat(data["end"])
                 except ValueError:
                     raise DataValidationError("Must be ISO format, e.g. 2021-01-01") 
             else:
-                self.to_date = data["end_date"]
+                self.expiration_date = data["end"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0])
 
