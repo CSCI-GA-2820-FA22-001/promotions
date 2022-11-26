@@ -199,15 +199,15 @@ class TestPromotion(unittest.TestCase):
         self.assertEqual(search4[0].product_id, prom1.product_id)
 
 
-        search5 = Promotion.find_by_start_date(prom4.start_date)
+        search5 = Promotion.find_by_start_date("2022/8/10")
         self.assertIsNot(search5, None)
         self.assertEqual(search5[0].name, prom4.name)
         self.assertEqual(search5[0].start_date, prom4.start_date)
 
-        search6 = Promotion.find_by_expiration_date(prom5.expiration_date)
-        self.assertIsNot(search6, None)
+        search6 = Promotion.find_by_expiration_date("2022/9/20")
+        self.assertIsNot(search6, None) 
         self.assertEqual(search6[0].name, prom5.name)
-        self.assertEqual(search6[0].start_date, prom5.expiration_date)
+        self.assertEqual(search6[0].expiration_date, prom5.expiration_date)
 '''
  def test_find_by_availability(self):
         """Find promotions by Availability"""
