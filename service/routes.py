@@ -7,6 +7,7 @@ This microservice handles the lifecycle of Promotions
 from flask import jsonify, request, url_for, make_response, abort
 from service.models import Promotion
 from service.common import status  # HTTP Status Codes
+from flask_restx import Api, Resource, fields, reqparse, inputs
 from . import app  # Import Flask application
 from werkzeug.exceptions import NotFound
 
@@ -16,15 +17,23 @@ from werkzeug.exceptions import NotFound
 @app.route("/")
 def index():
     """Root URL response"""
-    return (
-        jsonify(
-            name="Promotion REST API Service",
-            version="1.0",
-            paths=url_for("list_promotions", _external=True),
-        ),
-        status.HTTP_200_OK,
-    )
+    """ Index page """
+    return app.send_static_file('index.html')
 
+######################################################################
+# Configure Swagger before initializing it
+######################################################################
+api = Api(app,
+          version='1.0.0',
+          title='Promotions REST API Service',
+          description='This is the Promotions server.',
+          default='promotions',
+          default_label='Promotions service operations',
+          doc='/apidocs', # default also could use doc='/apidocs/'
+          prefix='/'
+         )
+
+#Define the create model so that the docs define what can be sent
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
