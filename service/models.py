@@ -229,7 +229,7 @@ class Promotion(db.Model):
         return cls.query.filter(cls.start_date == dateutil.parser.parse(start_date))
 
     @classmethod
-    def find_by_to_date(cls, expiration_date:str) -> list:
+    def find_by_expiration_date(cls, expiration_date:str) -> list:
         """Returns all Promotions with the expiration date
         Args:
             expiration_date (str): the end date of the Promotions you want to match
