@@ -7,6 +7,8 @@ Promotion - A Promotion used in the eCommerce website
 - product_id: (str) the product id associated with this promotion
 - promo_type: (str or enum) [BOGO | DISCOUNT | FIXED]
 - value: (int) the amount of the promotion base on promotion type
+- start_date: (str) the start date of the Promotion
+- expiration_date: (str) the end date of the Promotion
 
 All of the models are stored in this module
 """
