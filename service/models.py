@@ -7,12 +7,17 @@ Promotion - A Promotion used in the eCommerce website
 - product_id: (str) the product id associated with this promotion
 - promo_type: (str or enum) [BOGO | DISCOUNT | FIXED]
 - value: (int) the amount of the promotion base on promotion type
+- start_date: (str) the start date of the Promotion
+- expiration_date: (str) the end date of the Promotion
 
 All of the models are stored in this module
 """
 import logging
 from flask_sqlalchemy import SQLAlchemy
 from enum import Enum
+from datetime import datetime
+import dateutil.parser
+
 logger = logging.getLogger("flask.app")
 
 # Create the SQLAlchemy object to be initialized later in init_db()
@@ -44,6 +49,8 @@ class Promotion(db.Model):
     type = db.Column(db.Enum(PromotionType), nullable=False) #Types: BOGO, Flat, Percentage
     value = db.Column(db.Integer, default=0) #0 for Bogo
     active = db.Column(db.Boolean(), nullable=False, default=False)
+    start_date = db.Column(db.DateTime(), nullable=False)
+    expiration_date = db.Column(db.DateTime(), nullable=False)
 
     def __repr__(self):
         return "<Promotion %r id=[%s]>" % (self.name, self.id)
@@ -88,7 +95,9 @@ class Promotion(db.Model):
             "product_id": self.product_id,
             "type": self.type.name,
             "value": self.value,
-            "active": self.active
+            "active": self.active,
+            "start": self.start_date.isoformat(),
+            "end": self.expiration_date.isoformat(),
         }
 
     def deserialize(self, data):
@@ -110,6 +119,25 @@ class Promotion(db.Model):
             self.value = data["value"]
             self.active = data["active"]
 
+             # convert str to datetime
+            if data["start"] and isinstance(data["start"], str):
+                try:
+                    self.start_date = datetime.fromisoformat(data["start"])
+                except ValueError:
+                    raise DataValidationError("Must be ISO format, e.g. 2021-01-01")
+            else:
+                self.start_date = data["start"]
+
+            if data["end"] and isinstance(data["end"], str):
+                try:
+                    self.expiration_date = datetime.fromisoformat(data["end"])
+                except ValueError:
+                    raise DataValidationError("Must be ISO format, e.g. 2021-01-01") 
+            else:
+                self.expiration_date = data["end"]
+        except AttributeError as error:
+            raise DataValidationError("Invalid attribute: " + error.args[0])
+
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Promotion: missing " + error.args[0]
@@ -120,6 +148,8 @@ class Promotion(db.Model):
                 "Error message: " + error
             )
         return self
+    def is_available(self):
+        return self.start_date <= datetime.now() and self.expiration_date >= datetime.now()
 
     @classmethod
     def init_db(cls, app):
@@ -188,3 +218,42 @@ class Promotion(db.Model):
         """Returns the promotion with product_id: product_id """
         logger.info("Processing product_id query for %s ...", product_id)
         return cls.query.filter(cls.product_id == product_id).all()
+
+    @classmethod
+    def find_by_start_date(cls, start_date:str) -> list:
+        """Returns all Promotions with the start date
+        Args:
+            start_date (str): the start date of the Promotions you want to match
+        """ 
+        logger.info("Processing start date query for %s ...", start_date)
+        return cls.query.filter(cls.start_date == dateutil.parser.parse(start_date))
+
+    @classmethod
+    def find_by_expiration_date(cls, expiration_date:str) -> list:
+        """Returns all Promotions with the expiration date
+        Args:
+            expiration_date (str): the end date of the Promotions you want to match
+        """ 
+        logger.info("Processing end date query for %s ...", expiration_date)
+        return cls.query.filter(cls.expiration_date == dateutil.parser.parse(expiration_date))
+
+    @classmethod
+    def find_by_availability(cls, available:bool=True) -> list:
+        """Returns all Promotions by their availability
+        :param available: True for promotions that are available
+        :type available: boolean
+        :return: a collection of Promotions that are available
+        :rtype: list
+        """
+        logger.info("Processing available query for %s ...", available)
+        if available:
+            return cls.query.filter(
+                cls.start_date <= datetime.now()
+                ).filter(
+                    cls.expiration_date >= datetime.now()
+                )
+        else:
+            return cls.query.filter(
+                (cls.start_date > datetime.now()) | (cls.expiration_date < datetime.now())
+            )
+

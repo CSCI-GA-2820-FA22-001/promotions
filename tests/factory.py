@@ -7,6 +7,7 @@ import factory
 from service.models import Promotion, PromotionType
 from factory.fuzzy import FuzzyChoice
 import random
+from datetime import datetime, timedelta
 
 class PromotionFactory(factory.Factory):
     """Creates fake Accounts"""
@@ -21,7 +22,9 @@ class PromotionFactory(factory.Factory):
         "product_id": self.product_id,
         "type": self.type,
         "value": self.value,
-        "active": self.active
+        "active": self.active,
+        "start": self.start_date,
+        "end": self.expiration_date
         """
 
     id = factory.Sequence(lambda n: n)
@@ -38,3 +41,5 @@ class PromotionFactory(factory.Factory):
         value = random.choice([5,10,15,20,25, 30])
     
     active = False
+    start_date = factory.Sequence(lambda n: datetime.now() + timedelta(days = n - 20))
+    expiration_date = factory.Sequence(lambda n: datetime.now() + timedelta(days = n - 10))
