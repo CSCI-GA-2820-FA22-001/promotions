@@ -68,6 +68,10 @@ class TestPromotion(unittest.TestCase):
         promos = Promotion.all()
         self.assertEqual(len(promos), 1)
         print(repr(promos))
+
+        prom = Promotion(name="Prom",product_id=None,type=PromotionType.PERCENTAGE,value=20,active=True,
+        start_date = datetime(2022, 11, 10), expiration_date = datetime(2022, 11, 20))
+        self.assertRaises(DataValidationError, prom.create)
         #self.assertEqual(repr(promos),)
 
     def create_promotion_with_no_product_id(self):
@@ -208,46 +212,22 @@ class TestPromotion(unittest.TestCase):
         self.assertIsNot(search6, None) 
         self.assertEqual(search6[0].name, prom5.name)
         self.assertEqual(search6[0].expiration_date, prom5.expiration_date)
-'''
- def test_find_by_availability(self):
+
+    def test_find_by_availability(self):
         """Find promotions by Availability"""
         current_date = datetime.now()
-        Promotion(
-            name="Macbook", 
-            category=TypeOfPromo.Discount, 
-            product_id=11111, amount=10, 
-            description="Gread Deal", 
-            from_date=current_date - timedelta(days=1), 
-            to_date=current_date + timedelta(days=5)
-            ).create()
-        Promotion(
-            product_name="iwatch", 
-            category=TypeOfPromo.BOGOF, 
-            product_id=11112, amount=20, 
-            description="Gread Deal", 
-            from_date=datetime(2021, 10, 7), 
-            to_date=datetime(2021, 10, 13)
-            ).create()
-        Promotion(
-            product_name="iphone", 
-            category=TypeOfPromo.BOGOF, 
-            product_id=11113, amount=30, 
-            description="Gread Deal", 
-            from_date=current_date + timedelta(days=1), 
-            to_date=current_date + timedelta(days=7)
-            ).create() 
+        Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True,
+        start_date = current_date - timedelta(days=1), expiration_date = current_date + timedelta(days = 9)).create()
+        Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True,
+        start_date = current_date + timedelta(days=5), expiration_date = current_date + timedelta(days = 10)).create()
+
         promotions = Promotion.find_by_availability(True)
         promotion_list = [promotion for promotion in promotions]
         self.assertEqual(len(promotion_list), 1)
-        self.assertEqual(promotions[0].category, TypeOfPromo.Discount)
-        self.assertEqual(promotions[0].product_name, "Macbook")
-        self.assertEqual(promotions[0].product_id, 11111)
-        self.assertEqual(promotions[0].amount, 10)
-        self.assertEqual(promotions[0].description, "Gread Deal")
-        self.assertEqual(promotions[0].from_date, current_date - timedelta(days=1)) 
-        self.assertEqual(promotions[0].to_date, current_date + timedelta(days=5)) 
+        self.assertEqual(promotions[0].start_date, current_date - timedelta(days=1)) 
+        self.assertEqual(promotions[0].expiration_date, current_date + timedelta(days=9)) 
         promotions = Promotion.find_by_availability(False)
         promotion_list = [promotion for promotion in promotions]
-        self.assertEqual(len(promotion_list), 2)
-'''
+        self.assertEqual(len(promotion_list), 1)
+
 
