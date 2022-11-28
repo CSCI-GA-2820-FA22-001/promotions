@@ -5,7 +5,7 @@ This microservice handles the lifecycle of Promotions
 """
 
 from flask import jsonify, request, url_for, make_response, abort
-from service.models import Promotion
+from service.models import Promotion, PromotionType, DataValidationError
 from service.common import status  # HTTP Status Codes
 from flask_restx import Api, Resource, fields, reqparse, inputs
 from . import app  # Import Flask application
@@ -33,7 +33,53 @@ api = Api(app,
           prefix='/'
          )
 
+
 #Define the create model so that the docs define what can be sent
+create_model = api.model(
+    'Promotion',
+    {
+        'name': fields.String(required=False, description='The name of the promotion'),
+        'product_id': fields.Integer(
+            required=False, description='The product id associated with this promotion'
+        ),
+        'type': fields.String(required=False , description='The type of promotion [BOGO | DISCOUNT | FIXED]'),
+        'value': fields.Integer(
+            required=False,
+            description='The value of the promotion based on promo type',
+        ),
+        'start_date': fields.DateTime(
+            required=False, description='The start date of the promotion'
+        ),
+        'expiration_date': fields.DateTime(
+            required=False, description='The end date of the promotion'
+        ),
+        'active': fields.Boolean(required=False,
+                                description='Is the promotion active?')
+    }
+)
+
+promotion_model = api.inherit(
+    'PromotionModel',
+    create_model,
+    {
+        'id': fields.Integer(
+            readOnly=True, description='The unique id assigned internally by service'
+        ),
+    },
+)
+
+# query string arguments
+# --------------------------------------------------------------------------------------------------
+promotion_args = reqparse.RequestParser()
+promotion_args.add_argument('name', type=str, required=False, location='args', help='List Promotions by name')
+promotion_args.add_argument('product_id', type=int, required=False, location='args', help='The product id associated with this promotion')
+promotion_args.add_argument('type', type=str, required=False, location='args', help='The type of promotion [BOGO | DISCOUNT | FIXED]')
+promotion_args.add_argument('value', type=int, required=False, location='args', help='The value of the promotion based on promo type')
+promotion_args.add_argument('start_date', type=str, required=False, location='args', help='List Promotions by start date')
+promotion_args.add_argument('expiration_date', type=str, required=False, location='args', help='List Promotions by end date')
+promotion_args.add_argument('active', type=inputs.boolean, required=False, location='args', help='List Promotions by active status')
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
@@ -55,40 +101,45 @@ def check_content_type(media_type):
         f"Content-Type must be {media_type}",
     )
 
-
 ######################################################################
-# LIST ALL Promotions
+#  PATH: /promotions
 ######################################################################
-@app.route("/promotions", methods=["GET"])
-def list_promotions():
-    """Returns all of the Promotions"""
+@api.route('/promotions', strict_slashes=False)
+class PromotionCollection(Resource):
+    """ Handles all interactions with collections of Promotions """
 
-    app.logger.info("Request for Promotions list")
-    all_promotions = []
-
-    # Process the query string if any
-    name = request.args.get("name")
-    type = request.args.get("type")
-    value = request.args.get("value")
-    active = request.args.get("active")
-    product_id = request.args.get("product_id")
-    if name:
-        all_promotions = Promotion.find_by_name(name)
-    elif product_id:
-        all_promotions = Promotion.find_by_product_id(product_id)
-    elif type:
-        all_promotions = Promotion.find_by_type(type)
-    elif value:
-        all_promotions = Promotion.find_by_value(value)
-    elif active:
-        all_promotions = Promotion.find_by_active(active)
-    else:
-        all_promotions = Promotion.all()
-
-    # Return as an array of dictionaries
-    results = [promo.serialize() for promo in all_promotions]
-
-    return make_response(jsonify(results), status.HTTP_200_OK)
+    # ------------------------------------------------------------------
+    # LIST ALL PROMOTIONS
+    # ------------------------------------------------------------------
+    @api.doc('list_promotions')
+    @api.expect(promotion_args, validate=True)
+    @api.marshal_list_with(promotion_model)
+    def get(self):
+        """ Returns all of the Promotions """
+        args = promotion_args.parse_args()
+        all_promotions = []
+        app.logger.info("Request to list promotions based on query string %s ...", args)
+        if args['name']:
+            app.logger.info('Filtering by name: %s', args['name'])
+            all_promotions = Promotion.find_by_name(args['name'])
+        elif args['product_id']:
+            app.logger.info('Filtering by product id %s', args['product_id'])
+            all_promotions = Promotion.find_by_product_id(args['product_id'])
+        elif args['type']:
+            app.logger.info('Filtering by type %s', args['type'])
+            all_promotions = Promotion.find_by_type(args['type'])
+        elif args['value']:
+            app.logger.info('Filtering by value %s', args['value'])
+            all_promotions = Promotion.find_by_value(args['value'])
+        elif args['active']:
+            app.logger.info('Filtering by active %s', args['active'])
+            all_promotions = Promotion.find_by_active(args['active'])
+        else:
+            app.logger.info('Returning unfiltered list.')
+            all_promotions = Promotion.all()
+        results = [promo.serialize() for promo in all_promotions]
+        app.logger.info("Returning %d promotions", len(results))
+        return results, status.HTTP_200_OK
 
 ######################################################################
 # RETRIEVE A Promotion
@@ -117,10 +168,17 @@ def create_promotion():
     """
     app.logger.info("Request to create a Promotion")
     check_content_type("application/json")
+    args = request.get_json()
+    promotion_args = Promotion.find(args['id'])
+    if promotion_args:
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Promotion with id {args['id']} and name {args['name']} already exists",
+        )
 
-    # Create the account
+     # Create the account
     promotion = Promotion()
-    promotion.deserialize(request.get_json())
+    promotion = promotion.deserialize(args)
     promotion.create()
 
     # Create a message to return
@@ -130,7 +188,6 @@ def create_promotion():
     return make_response(
         jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
     )
-
 
 ######################################################################
 # UPDATE AN EXISTING Promotion
@@ -148,13 +205,17 @@ def update_promotion(promotion_id):
     promotion = Promotion.find(promotion_id)
     if not promotion:
         abort(
-            status.HTTP_404_NOT_FOUND, f"Account with id '{promotion_id}' was not found."
+            status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found."
         )
 
     # Update from the json in the body of the request
-    promotion.deserialize(request.get_json())
-    promotion.id = promotion_id
+    promotion = promotion.deserialize(request.get_json())
+    print("Update ", promotion)
     promotion.update()
+
+    app.logger.info(
+        f"Promotion with id {id} updated"
+    )
 
     return make_response(jsonify(promotion.serialize()), status.HTTP_200_OK)
 
@@ -200,10 +261,15 @@ def activate_promotion(promotion_id):
     """
     app.logger.info('Request to activate promotion with id: %s', promotion_id)
     promotion = Promotion.find(promotion_id)
+    
     if promotion == None:
-        app.abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+        print("HEREEE!!!!")
+        abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+
+    print("Activate ", promotion.active)
     promotion.active = True
     promotion.update()
+    # print("Activate ", promotion.active)
     return promotion.serialize(), status.HTTP_200_OK
 
 ######################################################################
@@ -218,7 +284,7 @@ def deactivate_promotion(promotion_id):
     app.logger.info('Request to deactivate promotion with id: %s', promotion_id)
     promotion = Promotion.find(promotion_id)
     if promotion == None:
-        app.abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+        abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
     promotion.active = False
     promotion.update()
     return promotion.serialize(), status.HTTP_200_OK

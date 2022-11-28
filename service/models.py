@@ -5,10 +5,12 @@ Promotion - A Promotion used in the eCommerce website
 - id: (int) primary key
 - name: (str) the name of the promotion
 - product_id: (str) the product id associated with this promotion
-- promo_type: (str or enum) [BOGO | DISCOUNT | FIXED]
+- type: (str or enum) [BOGO | DISCOUNT | FIXED]
 - value: (int) the amount of the promotion base on promotion type
+- active: (int) promotion is active or inactive
 - start_date: (str) the start date of the Promotion
 - expiration_date: (str) the end date of the Promotion
+
 
 All of the models are stored in this module
 """
@@ -63,7 +65,7 @@ class Promotion(db.Model):
             raise DataValidationError("Product Id cannot be empty")
 
         logger.info("Creating %s", self.name)
-        self.id = None  # id must be none to generate next primary key
+        # self.id = None  # id must be none to generate next primary key
         db.session.add(self)
         db.session.commit()
 
@@ -72,7 +74,7 @@ class Promotion(db.Model):
         Updates a Promotion to the database
         """
 
-        if not self.id or not isinstance(self.id, int):
+        if self.id is None or not isinstance(self.id, int):
             raise DataValidationError("Update called with invalid id field")
 
         if self.product_id is None or not isinstance(self.product_id, int):
@@ -108,13 +110,16 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-
+            self.id = data["id"]
+            print("Deserialize ", self.id)
             self.product_id = data["product_id"]
             # check if product id is Integer
             if self.product_id is None or not isinstance(self.product_id, int):
                 raise DataValidationError("Product Id must be an Integer")
 
             self.name = data["name"]
+            if not isinstance(self.name, str):
+                raise DataValidationError("Promotion name must be an Integer")
             self.type = getattr(PromotionType, data["type"])
             self.value = data["value"]
             self.active = data["active"]
@@ -148,6 +153,7 @@ class Promotion(db.Model):
                 "Error message: " + error
             )
         return self
+    
     def is_available(self):
         return self.start_date <= datetime.now() and self.expiration_date >= datetime.now()
 
@@ -170,13 +176,13 @@ class Promotion(db.Model):
     @classmethod
     def find(cls, promotion_id):
         """ Finds a Promotion by it's ID """
-        logger.info("Processing lookup for id %s ...", promotion_id)
+        logger.info("in find(): Processing lookup for id %s ...", promotion_id)
+        print("Result  ", cls.query.get(promotion_id))
         return cls.query.get(promotion_id)
-
+    
     @classmethod
     def find_by_name(cls, name):
         """Returns all Promotions with the given name
-
         Args:
             name (string): the name of the Promotions you want to match
         """
@@ -186,17 +192,16 @@ class Promotion(db.Model):
     @classmethod
     def find_by_type(cls, type):
         """Returns all Promotions with the given type
-
         Args:
             type (string): the type of the Promotions you want to match
         """
         logger.info("Processing type query for %s ...", type)
+
         return cls.query.filter(cls.type == type).all()
 
     @classmethod
     def find_by_value(cls, value):
         """Returns all Promotions with the given value
-
         Args:
             value (Integer): the type of the Promotions you want to match
         """
@@ -206,7 +211,6 @@ class Promotion(db.Model):
     @classmethod
     def find_by_active(cls, active):
         """Returns all Promotions with the given active status
-
         Args:
             active (boolean): the type of the Promotions you want to match
         """
@@ -218,6 +222,7 @@ class Promotion(db.Model):
         """Returns the promotion with product_id: product_id """
         logger.info("Processing product_id query for %s ...", product_id)
         return cls.query.filter(cls.product_id == product_id).all()
+
 
     @classmethod
     def find_by_start_date(cls, start_date:str) -> list:
@@ -256,4 +261,3 @@ class Promotion(db.Model):
             return cls.query.filter(
                 (cls.start_date > datetime.now()) | (cls.expiration_date < datetime.now())
             )
-
