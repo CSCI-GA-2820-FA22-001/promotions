@@ -12,7 +12,6 @@ from .common import log_handlers
 # Create Flask application
 app = Flask(__name__)
 app.config.from_object(config)
-
 # Dependencies require we import the routes AFTER the Flask app is created
 # pylint: disable=wrong-import-position, wrong-import-order
 from service import routes         # noqa: E402, E261
