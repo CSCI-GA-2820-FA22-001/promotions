@@ -34,6 +34,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y curl
+          sudo apt-get install -y libpq-dev python-dev
           curl -X PUT http://admin:pass@couchdb:5984/test
       - name: Run unit tests with nose
         run: nosetests
