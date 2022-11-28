@@ -190,6 +190,17 @@ class TestPromotion(unittest.TestCase):
         self.assertIsNot(search2, None)
         self.assertEqual(search2.name, prom2.name)
 
+        #find by name
+        search3 = Promotion.find_by_name("Promo3")
+        self.assertIsNot(search2, None)
+        self.assertEqual(search3[0].name, prom3.name)
+        self.assertEqual(search3[0].product_id, prom3.product_id)
+
+        #find by product id
+        search4 = Promotion.find_by_product_id(prom1.product_id)
+        self.assertIsNot(search4, None)
+        self.assertEqual(search4[0].name, prom1.name)
+        self.assertEqual(search4[0].product_id, prom1.product_id)
 
         search5 = Promotion.find_by_start_date("2022/8/10")
         self.assertIsNot(search5, None)
