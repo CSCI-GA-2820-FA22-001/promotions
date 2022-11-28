@@ -65,7 +65,6 @@ class Promotion(db.Model):
             raise DataValidationError("Product Id cannot be empty")
 
         logger.info("Creating %s", self.name)
-        # self.id = None  # id must be none to generate next primary key
         db.session.add(self)
         db.session.commit()
 
@@ -111,7 +110,6 @@ class Promotion(db.Model):
         """
         try:
             self.id = data["id"]
-            print("Deserialize ", self.id)
             self.product_id = data["product_id"]
             # check if product id is Integer
             if self.product_id is None or not isinstance(self.product_id, int):
@@ -177,7 +175,6 @@ class Promotion(db.Model):
     def find(cls, promotion_id):
         """ Finds a Promotion by it's ID """
         logger.info("in find(): Processing lookup for id %s ...", promotion_id)
-        print("Result  ", cls.query.get(promotion_id))
         return cls.query.get(promotion_id)
     
     @classmethod

@@ -210,7 +210,6 @@ def update_promotion(promotion_id):
 
     # Update from the json in the body of the request
     promotion = promotion.deserialize(request.get_json())
-    print("Update ", promotion)
     promotion.update()
 
     app.logger.info(
@@ -263,13 +262,10 @@ def activate_promotion(promotion_id):
     promotion = Promotion.find(promotion_id)
     
     if promotion == None:
-        print("HEREEE!!!!")
         abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
 
-    print("Activate ", promotion.active)
     promotion.active = True
     promotion.update()
-    # print("Activate ", promotion.active)
     return promotion.serialize(), status.HTTP_200_OK
 
 ######################################################################

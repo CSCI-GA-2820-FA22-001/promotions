@@ -104,9 +104,7 @@ class TestPromotionRoutes(unittest.TestCase):
         test_item = PromotionFactory()
         response = self.app.post("/promotions", json=test_item.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        print(test_item.serialize())
         response = self.app.post("/promotions", json=test_item.serialize())
-        print(test_item.serialize())
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_get_promotion(self):
@@ -133,7 +131,6 @@ class TestPromotionRoutes(unittest.TestCase):
 
         # check that the ID of test promos match JSON returned
         data = resp.get_json()
-        print("Test List  ", data)
         self.assertEqual(data[0]['id'], test_promotion00.id)
         self.assertEqual(data[1]['id'], test_promotion01.id)
 
@@ -281,7 +278,6 @@ class TestPromotionRoutes(unittest.TestCase):
         #Deactivate the promotion
         test_promotion.active = False
         # activate the promotion using service
-        print("In test ", test_promotion.id)
         resp_activate = self.app.put(
             "/promotions/{}/activate".format(test_promotion.id),
             content_type="application/json"
