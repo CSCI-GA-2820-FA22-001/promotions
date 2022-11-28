@@ -202,7 +202,6 @@ class TestPromotion(unittest.TestCase):
         self.assertEqual(search4[0].name, prom1.name)
         self.assertEqual(search4[0].product_id, prom1.product_id)
 
-
         search5 = Promotion.find_by_start_date("2022/8/10")
         self.assertIsNot(search5, None)
         self.assertEqual(search5[0].name, prom4.name)
@@ -230,4 +229,8 @@ class TestPromotion(unittest.TestCase):
         promotion_list = [promotion for promotion in promotions]
         self.assertEqual(len(promotion_list), 1)
 
-
+######################################################################
+#   M A I N
+######################################################################
+if __name__ == "__main__":
+    unittest.main()
