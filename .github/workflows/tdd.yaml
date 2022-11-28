@@ -1,9 +1,6 @@
 name: Run tdd tests
 on:
   push:
-    branches:
-      - master
-      - tddci
   pull_request:
     branches:
       - master
