@@ -29,7 +29,7 @@ class TestPromotionRoutes(unittest.TestCase):
     def setUpClass(cls):
         """ This runs once before the entire test suite """
         app.config["TESTING"] = True
-        app.config["DEBUG"] = False
+        app.config["DEBUG"] = True
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
         Promotion.init_db(app)
@@ -67,8 +67,8 @@ class TestPromotionRoutes(unittest.TestCase):
             test_promotion.type = new_promotion["type"]
             test_promotion.value = new_promotion["value"]
             test_promotion.product_id = new_promotion["product_id"]
-            test_promotion.start_date = new_promotion["start"]
-            test_promotion.expiration_date = new_promotion["end"]
+            test_promotion.start_date = new_promotion["start_date"]
+            test_promotion.expiration_date = new_promotion["expiration_date"]
             promotions.append(test_promotion)
         return promotions
 
@@ -91,13 +91,12 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         # Check the data is correct
         new_promotion = resp.get_json()
-
         self.assertEqual(new_promotion["name"], test_promotion.name, "Name does not match")
         self.assertEqual(new_promotion["type"], test_promotion.type.name, "type does not match")
         self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
         self.assertEqual(new_promotion["active"], test_promotion.active, "active status does not match")
-        self.assertEqual(datetime.fromisoformat(new_promotion["start"]), test_promotion.start_date, "start date does not match")
-        self.assertEqual(datetime.fromisoformat(new_promotion["end"]), test_promotion.expiration_date, "end date does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["start_date"]), test_promotion.start_date, "start date does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["expiration_date"]), test_promotion.expiration_date, "end date does not match")
 
     def test_create_duplicate(self):
         """It should not Create a duplicate Promotion"""

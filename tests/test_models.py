@@ -67,7 +67,6 @@ class TestPromotion(unittest.TestCase):
         self.assertIsNotNone(prom.id)
         promos = Promotion.all()
         self.assertEqual(len(promos), 1)
-        print(repr(promos))
 
         prom = Promotion(name="Prom",product_id=None,type=PromotionType.PERCENTAGE,value=20,active=True,
         start_date = datetime(2022, 11, 10), expiration_date = datetime(2022, 11, 20))
@@ -129,16 +128,16 @@ class TestPromotion(unittest.TestCase):
         self.assertEqual(data["type"], prom.type.name)
         self.assertIn("value", data)
         self.assertEqual(data["value"], prom.value)
-        self.assertIn("start", data)
-        self.assertEqual(datetime.fromisoformat(data["start"]), prom.start_date)
-        self.assertIn("end", data)
-        self.assertEqual(datetime.fromisoformat(data["end"]), prom.expiration_date)
+        self.assertIn("start_date", data)
+        self.assertEqual(datetime.fromisoformat(data["start_date"]), prom.start_date)
+        self.assertIn("expiration_date", data)
+        self.assertEqual(datetime.fromisoformat(data["expiration_date"]), prom.expiration_date)
 
         data["name"]="Promo2"
         data["product_id"]=2
         data["value"]=10
-        data["start"]=datetime(2022, 12, 10)
-        data["end"]=datetime(2022, 12, 20)
+        data["start_date"]=datetime(2022, 12, 10)
+        data["expiration_date"]=datetime(2022, 12, 20)
         prom.deserialize(data)
         self.assertEqual(prom.name,"Promo2")
         self.assertEqual(prom.product_id,2)

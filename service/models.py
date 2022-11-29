@@ -97,8 +97,8 @@ class Promotion(db.Model):
             "type": self.type.name,
             "value": self.value,
             "active": self.active,
-            "start": self.start_date.isoformat(),
-            "end": self.expiration_date.isoformat(),
+            "start_date": self.start_date.isoformat(),
+            "expiration_date": self.expiration_date.isoformat(),
         }
 
     def deserialize(self, data):
@@ -121,23 +121,22 @@ class Promotion(db.Model):
             self.type = getattr(PromotionType, data["type"])
             self.value = data["value"]
             self.active = data["active"]
-
              # convert str to datetime
-            if data["start"] and isinstance(data["start"], str):
+            if data["start_date"] and isinstance(data["start_date"], str):
                 try:
-                    self.start_date = datetime.fromisoformat(data["start"])
+                    self.start_date = datetime.fromisoformat(data["start_date"])
                 except ValueError:
                     raise DataValidationError("Must be ISO format, e.g. 2021-01-01")
             else:
-                self.start_date = data["start"]
+                self.start_date = data["start_date"]
 
-            if data["end"] and isinstance(data["end"], str):
+            if data["expiration_date"] and isinstance(data["expiration_date"], str):
                 try:
-                    self.expiration_date = datetime.fromisoformat(data["end"])
+                    self.expiration_date = datetime.fromisoformat(data["expiration_date"])
                 except ValueError:
                     raise DataValidationError("Must be ISO format, e.g. 2021-01-01") 
             else:
-                self.expiration_date = data["end"]
+                self.expiration_date = data["expiration_date"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0])
 
@@ -150,6 +149,7 @@ class Promotion(db.Model):
                 "Invalid Promotion: body of request contained bad or no data - "
                 "Error message: " + error
             )
+        
         return self
     
     def is_available(self):
@@ -175,6 +175,8 @@ class Promotion(db.Model):
     def find(cls, promotion_id):
         """ Finds a Promotion by it's ID """
         logger.info("in find(): Processing lookup for id %s ...", promotion_id)
+        # active_promotions = cls.query.filter(cls.id == promotion_id)
+        # return active_promotions[0]
         return cls.query.get(promotion_id)
     
     @classmethod
