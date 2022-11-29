@@ -67,8 +67,8 @@ class TestPromotionRoutes(unittest.TestCase):
             test_promotion.type = new_promotion["type"]
             test_promotion.value = new_promotion["value"]
             test_promotion.product_id = new_promotion["product_id"]
-            test_promotion.start_date = new_promotion["start"]
-            test_promotion.expiration_date = new_promotion["end"]
+            test_promotion.start_date = new_promotion["start_date"]
+            test_promotion.expiration_date = new_promotion["expiration_date"]
             promotions.append(test_promotion)
         return promotions
 
@@ -96,8 +96,8 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(new_promotion["type"], test_promotion.type.name, "type does not match")
         self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
         self.assertEqual(new_promotion["active"], test_promotion.active, "active status does not match")
-        self.assertEqual(datetime.fromisoformat(new_promotion["start"]), test_promotion.start_date, "start date does not match")
-        self.assertEqual(datetime.fromisoformat(new_promotion["end"]), test_promotion.expiration_date, "end date does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["start_date"]), test_promotion.start_date, "start date does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["expiration_date"]), test_promotion.expiration_date, "end date does not match")
 
     def test_create_duplicate(self):
         """It should not Create a duplicate Promotion"""
@@ -160,6 +160,24 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data[0]['name'], test_promotion_name.name)
+
+    def test_list_promotion_by_start_date(self):
+        # get the type of a promotion
+        test_promotion_start = self._create_promotions(1)[0]
+        logging.debug(test_promotion_start)
+        resp = self.app.get("/promotions", query_string="start_date={}".format(test_promotion_start.start_date))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['start_date'], test_promotion_start.start_date)
+    
+    def test_list_promotion_by_expiration_date(self):
+        # get the type of a promotion
+        test_promotion_end = self._create_promotions(1)[0]
+        logging.debug(test_promotion_end)
+        resp = self.app.get("/promotions", query_string="expiration_date={}".format(test_promotion_end.expiration_date))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['expiration_date'], test_promotion_end.expiration_date)
 
     def test_list_promotion_by_active(self):
         test_promotion_list = self._create_promotions(5)
