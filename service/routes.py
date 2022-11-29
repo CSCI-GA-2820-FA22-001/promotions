@@ -134,6 +134,12 @@ class PromotionCollection(Resource):
         elif args['active']:
             app.logger.info('Filtering by active %s', args['active'])
             all_promotions = Promotion.find_by_active(args['active'])
+        elif args['start_date']:
+            app.logger.info('Filtering by start date %s', args['start_date'])
+            all_promotions = Promotion.find_by_start_date(args['start_date'])
+        elif args['expiration_date']:
+            app.logger.info('Filtering by end date %s', args['expiration_date'])
+            all_promotions = Promotion.find_by_expiration_date(args['expiration_date'])
         else:
             app.logger.info('Returning unfiltered list.')
             all_promotions = Promotion.all()
