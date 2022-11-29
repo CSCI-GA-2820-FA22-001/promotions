@@ -12,7 +12,7 @@ from . import app  # Import Flask application
 from werkzeug.exceptions import NotFound
 
 ######################################################################
-# GET INDEX
+# Configure the Root route before OpenAPI
 ######################################################################
 @app.route("/")
 def index():
@@ -190,34 +190,50 @@ def create_promotion():
     )
 
 ######################################################################
-# UPDATE AN EXISTING Promotion
+# PATH /promotions/{promotion_id}
 ######################################################################
-@app.route("/promotions/<int:promotion_id>", methods=["PUT"])
-def update_promotion(promotion_id):
+@api.route('/promotions/<promotion_id>')
+@api.param('promotion_id', 'The Promotion identifier')
+class PromotionResource(Resource):
     """
-    Update a Promotion
-    This endpoint will update an Promotion based the body that is posted
+    PromotionResource class
+    Allows the manipulation of a single Promotion
+    GET /promotion{id} - Returns a Promotion with the id
+    PUT /promotion{id} - Update a Promotion with the id
+    DELETE /promotion{id} -  Deletes a Promotion with the id
     """
-    app.logger.info("Request to update account with id: %s", promotion_id)
-    check_content_type("application/json")
+    #------------------------------------------------------------------
+    # UPDATE AN EXISTING PROMOTION
+    #------------------------------------------------------------------
 
-    # See if the account exists and abort if it doesn't
-    promotion = Promotion.find(promotion_id)
-    if not promotion:
-        abort(
-            status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found."
+    @api.doc('update_promotion')
+    @api.response(404, 'Promotion not found')
+    @api.response(400, 'The posted Promotion data was not valid')
+    @api.expect(promotion_model)
+    @api.marshal_with(promotion_model)
+    def put(self, promotion_id):
+        """
+        Update a Promotion
+        This endpoint will update a Promotion based the body that is posted
+        """
+        app.logger.info('Request to Update a Promotion with id [%s]', promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if not promotion:
+            abort(
+                status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found."
+            )
+
+        app.logger.debug('Payload = %s', api.payload)
+        # Update from the json in the body of the request
+        data = api.payload
+        promotion = promotion.deserialize(data)
+        promotion.update()
+
+        app.logger.info(
+            f"Promotion with id {id} updated"
         )
 
-    # Update from the json in the body of the request
-    promotion = promotion.deserialize(request.get_json())
-    promotion.update()
-
-    app.logger.info(
-        f"Promotion with id {id} updated"
-    )
-
-    return make_response(jsonify(promotion.serialize()), status.HTTP_200_OK)
-
+        return promotion.serialize(), status.HTTP_200_OK
 
 ######################################################################
 # DELETE AN Promotion
