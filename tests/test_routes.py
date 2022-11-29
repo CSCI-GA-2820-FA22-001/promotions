@@ -13,6 +13,7 @@ from service.models import Promotion, DataValidationError, db
 from service.common import status
 from service import app
 from .factory import PromotionFactory
+from datetime import datetime, timedelta
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/testdb"
@@ -65,6 +66,9 @@ class TestPromotionRoutes(unittest.TestCase):
             test_promotion.active = new_promotion["active"]
             test_promotion.type = new_promotion["type"]
             test_promotion.value = new_promotion["value"]
+            test_promotion.product_id = new_promotion["product_id"]
+            test_promotion.start_date = new_promotion["start_date"]
+            test_promotion.expiration_date = new_promotion["expiration_date"]
             promotions.append(test_promotion)
         return promotions
 
@@ -89,9 +93,19 @@ class TestPromotionRoutes(unittest.TestCase):
         new_promotion = resp.get_json()
 
         self.assertEqual(new_promotion["name"], test_promotion.name, "Name does not match")
-        self.assertEqual(new_promotion["type"], test_promotion.type, "type does not match")
+        self.assertEqual(new_promotion["type"], test_promotion.type.name, "type does not match")
         self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
         self.assertEqual(new_promotion["active"], test_promotion.active, "active status does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["start_date"]), test_promotion.start_date, "start date does not match")
+        self.assertEqual(datetime.fromisoformat(new_promotion["expiration_date"]), test_promotion.expiration_date, "end date does not match")
+
+    def test_create_duplicate(self):
+        """It should not Create a duplicate Promotion"""
+        test_item = PromotionFactory()
+        response = self.app.post("/promotions", json=test_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.app.post("/promotions", json=test_item.serialize())
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_get_promotion(self):
         """ Get a single Promotion """
@@ -120,7 +134,6 @@ class TestPromotionRoutes(unittest.TestCase):
         self.assertEqual(data[0]['id'], test_promotion00.id)
         self.assertEqual(data[1]['id'], test_promotion01.id)
 
-
     def test_list_promotion_by_type(self):
         # get the type of a promotion
         test_promotion_type = self._create_promotions(1)[0]
@@ -148,14 +161,54 @@ class TestPromotionRoutes(unittest.TestCase):
         data = resp.get_json()
         self.assertEqual(data[0]['name'], test_promotion_name.name)
 
-    def test_list_promotion_by_active(self):
+    def test_list_promotion_by_start_date(self):
         # get the type of a promotion
-        test_promotion_active = self._create_promotions(1)[0]
-        logging.debug(test_promotion_active)
-        resp = self.app.get("/promotions", query_string="active={}".format(test_promotion_active.active))
+        test_promotion_start = self._create_promotions(1)[0]
+        logging.debug(test_promotion_start)
+        resp = self.app.get("/promotions", query_string="start_date={}".format(test_promotion_start.start_date))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data[0]['active'], test_promotion_active.active)
+        self.assertEqual(data[0]['start_date'], test_promotion_start.start_date)
+    
+    def test_list_promotion_by_expiration_date(self):
+        # get the type of a promotion
+        test_promotion_end = self._create_promotions(1)[0]
+        logging.debug(test_promotion_end)
+        resp = self.app.get("/promotions", query_string="expiration_date={}".format(test_promotion_end.expiration_date))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['expiration_date'], test_promotion_end.expiration_date)
+
+    def test_list_promotion_by_active(self):
+        test_promotion_list = self._create_promotions(5)
+        active_promotions = [promo for promo in test_promotion_list if promo.active is True]
+        inactive_promotions = [promo for promo in test_promotion_list if promo.active is False]
+        active_count = len(active_promotions)
+        inactive_count = len(inactive_promotions)
+        logging.debug("Active Promotions [%d] %s", active_count, active_promotions)
+        logging.debug("Inactive Promotions [%d] %s", inactive_count, inactive_promotions)
+
+        # test for active
+        resp = self.app.get(
+            "/promotions", query_string="active=true"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), active_count)
+        # check the data just to be sure
+        for promo in data:
+            self.assertEqual(promo["active"], True)
+
+         # test for unavailable
+        resp = self.app.get(
+            "/promotions", query_string="active=false"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), inactive_count)
+        # check the data just to be sure
+        for promo in data:
+            self.assertEqual(promo["active"], False)
 
     def test_update_promotion(self):
         """ Update an existing Promotion """
@@ -203,7 +256,9 @@ class TestPromotionRoutes(unittest.TestCase):
 
     def test_bad_request(self):
         """It should not Create when sending the wrong data"""
-        resp = self.app.post("/promotions", json={"name": "not enough data"})
+        test_promotion = PromotionFactory()
+        test_promotion.name = 2
+        resp = self.app.post("/promotions", json=test_promotion.serialize())
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_method_not_allowed(self):
@@ -223,3 +278,72 @@ class TestPromotionRoutes(unittest.TestCase):
         """health endpoint should return {"status":"OK}, 200"""
         resp = self.app.get("/health")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_list_promotion_by_product_id(self):
+        # get the product id of a promotion
+        test_promotion_prod_id = self._create_promotions(1)[0]
+        logging.debug(test_promotion_prod_id)
+        resp = self.app.get("/promotions", query_string="product_id={}".format(test_promotion_prod_id.product_id))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data[0]['product_id'], test_promotion_prod_id.product_id)
+
+
+    def test_activate_promotion(self):
+        """ Activate an existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #Deactivate the promotion
+        test_promotion.active = False
+        # activate the promotion using service
+        resp_activate = self.app.put(
+            "/promotions/{}/activate".format(test_promotion.id),
+            content_type="application/json"
+        )
+
+        self.assertEqual(resp_activate.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_activate.get_json()['active'], True)
+
+    def test_deactivate_promotion(self):
+        """ Deactivate an existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #activate the promotion
+        test_promotion.active = True
+        # deactivate the promotion using endpoint
+        resp_deactivate = self.app.put(
+            "/promotions/{}/deactivate".format(test_promotion.id),
+            content_type="application/json"
+        )
+
+        self.assertEqual(resp_deactivate.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_deactivate.get_json()['active'], False)
+
+    def test_activate_promotion_not_found(self):
+        """ Activate a non existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #Deactivate the promotion
+        test_promotion.active = False
+        test_id = test_promotion.id + 1
+        # activate the promotion using service
+        resp_activate = self.app.put(
+            "/promotions/{}/activate".format(test_id),
+            content_type="application/json"
+        )
+        self.assertEqual(resp_activate.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_deactivate_promotion_not_found(self):
+        """ Deactivate a non existing promotion """
+        # create a promotion to activate
+        test_promotion = self._create_promotions(1)[0]
+        #activate the promotion
+        test_promotion.active = True
+        test_id = test_promotion.id + 1
+        # deactivate the promotion using endpoint
+        resp_deactivate = self.app.put(
+            "/promotions/{}/deactivate".format(test_id),
+            content_type="application/json"
+        )
+
+        self.assertEqual(resp_deactivate.status_code, status.HTTP_404_NOT_FOUND)
