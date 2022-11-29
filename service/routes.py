@@ -147,53 +147,38 @@ class PromotionCollection(Resource):
         app.logger.info("Returning %d promotions", len(results))
         return results, status.HTTP_200_OK
 
-######################################################################
-# RETRIEVE A Promotion
-######################################################################
-@app.route("/promotions/<int:promotion_id>", methods=["GET"])
-def get_promotion(promotion_id):
-    """
-    Retrieve a single Promotion
-    This endpoint will return an Promotion based on it's id
-    """
-    app.logger.info("Request for promotion with id: %s", promotion_id)
-    promotion = Promotion.find(promotion_id)
-    if not promotion:
-        raise NotFound("Promotion with id '{}' was not found.".format(promotion_id))
-    return make_response(jsonify(promotion.serialize()), status.HTTP_200_OK)
+    # ------------------------------------------------------------------
+    # CREATE A PROMOTION
+    # ------------------------------------------------------------------
+    @api.doc('create_promotions')
+    @api.response(400, 'The posted data was not valid')
+    @api.expect(create_model)
+    @api.marshal_with(promotion_model, code=201)
+    def post(self):
+        """
+        Creates a Promotion
+        This endpoint will create an Promotion based the data in the body that is posted
+        """
+        app.logger.info("Request to create a Promotion")
+        check_content_type("application/json")
+        args = request.get_json()
+        promotion_args = Promotion.find(args['id'])
 
-######################################################################
-# CREATE A NEW Promotion
-######################################################################
+        if promotion_args:
+            abort(
+                status.HTTP_409_CONFLICT,
+                f"Promotion with id {args['id']} and name {args['name']} already exists",
+            )
 
-@app.route("/promotions", methods=["POST"])
-def create_promotion():
-    """
-    Creates a Promotion
-    This endpoint will create an Promotion based the data in the body that is posted
-    """
-    app.logger.info("Request to create a Promotion")
-    check_content_type("application/json")
-    args = request.get_json()
-    promotion_args = Promotion.find(args['id'])
-    if promotion_args:
-        abort(
-            status.HTTP_409_CONFLICT,
-            f"Promotion with id {args['id']} and name {args['name']} already exists",
-        )
-
-     # Create the account
-    promotion = Promotion()
-    promotion = promotion.deserialize(args)
-    promotion.create()
-
-    # Create a message to return
-    message = promotion.serialize()
-    location_url = url_for("get_promotion", promotion_id=promotion.id, _external=True)
-
-    return make_response(
-        jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
-    )
+        # Create the promotion
+        promotion = Promotion()
+        promotion = promotion.deserialize(args)
+        promotion.create()
+        # Create a message to return
+        message = promotion.serialize()
+        location_url = api.url_for(PromotionResource, promotion_id=promotion.id, _external=True)
+        app.logger.info("Promotion with ID [%s] created.", promotion.id)
+        return message, status.HTTP_201_CREATED, {"Location": location_url}
 
 ######################################################################
 # PATH /promotions/{promotion_id}
@@ -208,6 +193,23 @@ class PromotionResource(Resource):
     PUT /promotion{id} - Update a Promotion with the id
     DELETE /promotion{id} -  Deletes a Promotion with the id
     """
+    #------------------------------------------------------------------
+    # RETRIEVE A PROMOTION
+    #------------------------------------------------------------------
+    @api.doc('get_promotion')
+    @api.response(404, 'Promotion not found')
+    @api.marshal_with(promotion_model)
+    def get(self, promotion_id):
+        """
+        Retrieve a single Promotion
+        This endpoint will return a Promotion based on it's id
+        """
+        app.logger.info("Request for promotion with id: %s", promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if not promotion:
+            raise NotFound("Promotion with id '{}' was not found.".format(promotion_id))
+        return promotion.serialize(), status.HTTP_200_OK
+
     #------------------------------------------------------------------
     # UPDATE AN EXISTING PROMOTION
     #------------------------------------------------------------------
@@ -240,24 +242,24 @@ class PromotionResource(Resource):
         )
 
         return promotion.serialize(), status.HTTP_200_OK
+    
+    #------------------------------------------------------------------
+    # DELETE A PROMOTION
+    #------------------------------------------------------------------
+    @api.doc('delete_promotion')
+    @api.response(204, 'Promotion deleted')
+    def delete(self, promotion_id):
+        """
+        Delete a Promotion
+        This endpoint will delete an Promotion based the id specified in the path
+        """
+        app.logger.info('Request to Delete a Promotion with id [%s]', promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if promotion:
+            promotion.delete()
+            app.logger.info('Promotion with id [%s] was deleted', promotion_id)
 
-######################################################################
-# DELETE AN Promotion
-######################################################################
-@app.route("/promotions/<int:promotion_id>", methods=["DELETE"])
-def delete_promotion(promotion_id):
-    """
-    Delete a Promotion
-    This endpoint will delete an Promotion based the id specified in the path
-    """
-    app.logger.info("Request to delete account with id: %s", promotion_id)
-
-    # Retrieve the account to delete and delete it if it exists
-    promotion = Promotion.find(promotion_id)
-    if promotion:
-        promotion.delete()
-
-    return make_response("", status.HTTP_204_NO_CONTENT)
+        return '', status.HTTP_204_NO_CONTENT
 
 ######################################################################
 # Health check for Kube

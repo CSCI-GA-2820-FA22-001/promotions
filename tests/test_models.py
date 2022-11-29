@@ -67,7 +67,6 @@ class TestPromotion(unittest.TestCase):
         self.assertIsNotNone(prom.id)
         promos = Promotion.all()
         self.assertEqual(len(promos), 1)
-        print(repr(promos))
 
         prom = Promotion(name="Prom",product_id=None,type=PromotionType.PERCENTAGE,value=20,active=True,
         start_date = datetime(2022, 11, 10), expiration_date = datetime(2022, 11, 20))

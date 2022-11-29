@@ -121,7 +121,6 @@ class Promotion(db.Model):
             self.type = getattr(PromotionType, data["type"])
             self.value = data["value"]
             self.active = data["active"]
-
              # convert str to datetime
             if data["start_date"] and isinstance(data["start_date"], str):
                 try:
@@ -150,6 +149,7 @@ class Promotion(db.Model):
                 "Invalid Promotion: body of request contained bad or no data - "
                 "Error message: " + error
             )
+        
         return self
     
     def is_available(self):
@@ -175,6 +175,8 @@ class Promotion(db.Model):
     def find(cls, promotion_id):
         """ Finds a Promotion by it's ID """
         logger.info("in find(): Processing lookup for id %s ...", promotion_id)
+        # active_promotions = cls.query.filter(cls.id == promotion_id)
+        # return active_promotions[0]
         return cls.query.get(promotion_id)
     
     @classmethod
