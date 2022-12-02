@@ -52,6 +52,16 @@ $(function () {
         let start = $("#promotion_start").val();
         let end = $("#promotion_end").val();
 
+        if (type == null){
+            flash_message("Must select type")
+            return
+        }
+
+        if ($("#promotion_active").val() != "true" && $("#promotion_active").val() != "false" ){
+            flash_message("Must select active status")
+            return
+        }
+
         let data = {
             "id": promotion_id,
             "name": name,
@@ -244,7 +254,7 @@ $(function () {
             table += '<th class="col-md-2">Name</th>'
             table += '<th class="col-md-2">Type</th>'
             table += '<th class="col-md-2">Active</th>'
-            table += '<th class="col-md-2">Product_Id</th>'
+            table += '<th class="col-md-2">Product Id</th>'
             table += '<th class="col-md-2">value</th>'
             table += '<th class="col-md-2">start</th>'
             table += '<th class="col-md-2">end</th>'
@@ -272,6 +282,46 @@ $(function () {
             flash_message(res.responseJSON.message)
         });
 
+    });
+
+
+    // ****************************************
+    // Activate a promotion
+    // ****************************************
+
+    $("#activate-btn").click(function () {
+
+        let promotion_id = $("#promotion_id").val();
+
+        if (promotion_id == "") {
+            flash_message("Promotion id must be set")
+            return
+        }
+
+        
+
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "PUT",
+            url: "/promotions/promid/activate".replace('promid',promotion_id),
+            contentType: "application/json",
+        });
+
+        ajax.done(function(res){
+            update_form_data(res)
+            if(res.active){
+                flash_message("Activated")
+            }
+            else{
+                flash_message("De-activated")
+            }
+            
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message)
+        });
     });
 
 })
