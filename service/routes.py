@@ -162,9 +162,9 @@ class PromotionCollection(Resource):
         app.logger.info("Request to create a Promotion")
         check_content_type("application/json")
         args = request.get_json()
-        promotion_args = Promotion.find(args['id'])
+        promotion_exist = Promotion.find_by_name(args['name'])
 
-        if promotion_args:
+        if promotion_exist:
             abort(
                 status.HTTP_409_CONFLICT,
                 f"Promotion with id {args['id']} and name {args['name']} already exists",

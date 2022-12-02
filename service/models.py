@@ -64,6 +64,7 @@ class Promotion(db.Model):
         if self.product_id is None:
             raise DataValidationError("Product Id cannot be empty")
 
+        self.id = None  # id must be none to generate next primary key
         logger.info("Creating %s", self.name)
         db.session.add(self)
         db.session.commit()
@@ -109,7 +110,7 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.id = data["id"]
+            # self.id = data["id"]
             self.product_id = data["product_id"]
             # check if product id is Integer
             if self.product_id is None or not isinstance(self.product_id, int):
@@ -186,7 +187,8 @@ class Promotion(db.Model):
             name (string): the name of the Promotions you want to match
         """
         logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
+        if isinstance(name, str):
+            return cls.query.filter(cls.name == name).all()
 
     @classmethod
     def find_by_type(cls, type):
