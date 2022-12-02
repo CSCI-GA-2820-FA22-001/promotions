@@ -20,7 +20,7 @@ Scenario: Create a Promo
     When I visit the "Home Page"
     And I set the "ID" to "4"
     And I set the "Name" to "Newpromo"
-    And I set the "Type" to "FIXED"
+    And I select "FIXED" in the "Type" dropdown
     And I select "False" in the "ACTIVE" dropdown
     And I set the "Product ID" to "7"
     And I set the "value" to "45"
@@ -58,19 +58,9 @@ Scenario: Search for promos by name
     And I should not see "bogo2" in the results
     And I should not see "prom8" in the results
 
-'''Scenario: Search for a promo by id
-    When I visit the "Home Page"
-    And I set the "id" to "1"
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "bogo2" in the results
-    And I should not see "prct3" in the results
-    And I should not see "prom8" in the results
-'''
-
 Scenario: Search for Percentage promos
     When I visit the "Home Page"
-    And I set the "Type" to "PERCENTAGE"
+    And I select "PERCENTAGE" in the "Type" dropdown
     And I press the "Search" button
     Then I should see the message "Success"
     And I should see "prct3" in the results
@@ -121,3 +111,18 @@ Scenario: Delete Promotions
     Then I should see "prom8" in the "Name" field
     And I should not see "bogo2" in the results
     And I should not see "prct3" in the results
+
+
+Scenario: ACTION: Activate/Deactive Promotions
+    When I visit the "Home Page"
+    And I press the "Activate" button
+    Then I should see the message "Promotion id must be set"
+    When I set the "Name" to "bogo2"
+    And I press the "Search" button
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Activate" button
+    Then I should see the message "De-activated"
+    When I press the "Activate" button
+    Then I should see the message "Activated"

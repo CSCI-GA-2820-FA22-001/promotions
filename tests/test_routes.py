@@ -93,7 +93,8 @@ class TestPromotionRoutes(unittest.TestCase):
         new_promotion = resp.get_json()
         self.assertEqual(new_promotion["name"], test_promotion.name, "Name does not match")
         self.assertEqual(new_promotion["type"], test_promotion.type.name, "type does not match")
-        self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
+        if(new_promotion["type"] != "BOGO"):
+            self.assertEqual(new_promotion["value"], test_promotion.value, "value does not match")
         self.assertEqual(new_promotion["active"], test_promotion.active, "active status does not match")
         self.assertEqual(datetime.fromisoformat(new_promotion["start_date"]), test_promotion.start_date, "start date does not match")
         self.assertEqual(datetime.fromisoformat(new_promotion["expiration_date"]), test_promotion.expiration_date, "end date does not match")

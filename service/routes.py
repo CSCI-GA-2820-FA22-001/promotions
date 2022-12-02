@@ -170,9 +170,13 @@ class PromotionCollection(Resource):
                 f"Promotion with id {args['id']} and name {args['name']} already exists",
             )
 
+
+
         # Create the promotion
         promotion = Promotion()
         promotion = promotion.deserialize(args)
+        if args['type'] == "BOGO":
+            promotion.value = 0
         promotion.create()
         # Create a message to return
         message = promotion.serialize()
@@ -288,7 +292,7 @@ def activate_promotion(promotion_id):
     if promotion == None:
         abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
 
-    promotion.active = True
+    promotion.active = not promotion.active
     promotion.update()
     return promotion.serialize(), status.HTTP_200_OK
 
