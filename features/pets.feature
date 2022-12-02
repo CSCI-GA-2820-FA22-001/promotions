@@ -102,10 +102,18 @@ Scenario: Update a promo
 
 Scenario: Delete Promotions
     When I visit the "Home Page"
-    And I set the "Id" to "1"
+    And I set the "Name" to "bogo2"
+    And I press the "Search" button
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
     And I press the "Delete" button
     Then I should see the message "promotion has been Deleted!"
-    When I set the "Id" to "2"
+    When I set the "Name" to "prct3"
+    And I press the "Search" button
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
     And I press the "Delete" button
     Then I should see the message "promotion has been Deleted!"
     When I press the "Clear" button
