@@ -170,9 +170,13 @@ class PromotionCollection(Resource):
                 f"Promotion with id {args['id']} and name {args['name']} already exists",
             )
 
+
+
         # Create the promotion
         promotion = Promotion()
         promotion = promotion.deserialize(args)
+        if args['type'] == "BOGO":
+            promotion.value = 0
         promotion.create()
         # Create a message to return
         message = promotion.serialize()
