@@ -279,7 +279,7 @@ class ActivateResource(Resource):
         if promotion is None:
             abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
 
-        promotion.active = True
+        promotion.active = not promotion.active
         promotion.update()
         return promotion.serialize(), status.HTTP_200_OK
 
