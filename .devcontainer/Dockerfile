@@ -30,6 +30,7 @@ EXPOSE 8000
 
 # Enable color terminal for docker exec bash
 ENV TERM=xterm-256color
+ENV BASEU=localhost:31001
 
 # Become a regular user
 USER $USERNAME
