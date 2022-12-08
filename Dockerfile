@@ -18,7 +18,6 @@ USER vagrant
 
 # Expose any ports the app is expecting in the environment
 ENV FLASK_APP=service:app
-ENV BASEU=localhost:31001
 ENV PORT 8080
 EXPOSE $PORT
 

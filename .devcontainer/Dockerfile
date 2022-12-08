@@ -26,11 +26,10 @@ RUN apt-get install -y gcc libpq-dev
 WORKDIR /app
 RUN python -m pip install --upgrade pip wheel
 
-EXPOSE 8000
+EXPOSE 8080
 
 # Enable color terminal for docker exec bash
 ENV TERM=xterm-256color
-ENV BASEU=localhost:31001
 
 # Become a regular user
 USER $USERNAME
