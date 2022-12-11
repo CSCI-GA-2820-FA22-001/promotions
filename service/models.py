@@ -143,6 +143,9 @@ class Promotion(db.Model):
             else:
                 self.expiration_date = data["expiration_date"]
 
+        except AttributeError as error:
+            raise DataValidationError("Invalid attribute: " + error.args[0])
+
         except KeyError as error:
             raise DataValidationError(
                 "Invalid Promotion: missing " + error.args[0]
