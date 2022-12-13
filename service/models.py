@@ -17,7 +17,7 @@ All of the models are stored in this module
 import logging
 from flask_sqlalchemy import SQLAlchemy
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import dateutil.parser
 
 logger = logging.getLogger("flask.app")
@@ -64,6 +64,11 @@ class Promotion(db.Model):
         if self.product_id is None:
             raise DataValidationError("Product Id cannot be empty")
 
+        if self.start_date is None and self.expiration_date is None:
+            self.start_date = date.today()
+            self.expiration_date = (date.today() + timedelta(days=9))
+
+        self.id = None  # id must be none to generate next primary key
         logger.info("Creating %s", self.name)
         db.session.add(self)
         db.session.commit()
@@ -109,7 +114,7 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.id = data["id"]
+            # self.id = data["id"]
             self.product_id = data["product_id"]
             # check if product id is Integer
             if self.product_id is None or not isinstance(self.product_id, int):
@@ -137,6 +142,7 @@ class Promotion(db.Model):
                     raise DataValidationError("Must be ISO format, e.g. 2021-01-01") 
             else:
                 self.expiration_date = data["expiration_date"]
+
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0])
 
@@ -153,7 +159,7 @@ class Promotion(db.Model):
         return self
     
     def is_available(self):
-        return self.start_date <= datetime.now() and self.expiration_date >= datetime.now()
+        return self.start_date <= date.today() and self.expiration_date >= date.today()
 
     @classmethod
     def init_db(cls, app):
@@ -186,7 +192,8 @@ class Promotion(db.Model):
             name (string): the name of the Promotions you want to match
         """
         logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
+        if isinstance(name, str):
+            return cls.query.filter(cls.name == name).all()
 
     @classmethod
     def find_by_type(cls, type):

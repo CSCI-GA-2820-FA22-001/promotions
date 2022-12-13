@@ -162,17 +162,21 @@ class PromotionCollection(Resource):
         app.logger.info("Request to create a Promotion")
         check_content_type("application/json")
         args = request.get_json()
-        promotion_args = Promotion.find(args['id'])
+        promotion_exist = Promotion.find_by_name(args['name'])
 
-        if promotion_args:
+        if promotion_exist:
             abort(
                 status.HTTP_409_CONFLICT,
                 f"Promotion with id {args['id']} and name {args['name']} already exists",
             )
 
+
+
         # Create the promotion
         promotion = Promotion()
         promotion = promotion.deserialize(args)
+        if args['type'] == "BOGO":
+            promotion.value = 0
         promotion.create()
         # Create a message to return
         message = promotion.serialize()
@@ -262,6 +266,50 @@ class PromotionResource(Resource):
         return '', status.HTTP_204_NO_CONTENT
 
 ######################################################################
+# PATH /promotions/{promotion_id}/activate
+######################################################################
+@api.route('/promotions/<int:promotion_id>/activate')
+@api.param('promotion_id', 'The Promotion identifier')
+class ActivateResource(Resource):
+    "Activate action for a Promotion"
+    @api.doc('activate_promotion')
+    def put(self, promotion_id):
+        """
+        Activate a Promotion
+        This endpoint will activate a Promotion
+        """
+        app.logger.info('Request to activate promotion with id: %s', promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if promotion is None:
+            abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+
+        promotion.active = not promotion.active
+        promotion.update()
+        return promotion.serialize(), status.HTTP_200_OK
+
+######################################################################
+# PATH /promotions/{promotion_id}/deactivate
+######################################################################
+@api.route('/promotions/<int:promotion_id>/deactivate')
+@api.param('promotion_id', 'The Promotion identifier')
+class DeactivateResource(Resource):
+    "Deactivate action for a Promotion"
+    @api.doc('deactivate_promotion')
+    def put(self, promotion_id):
+        """
+        Deactivate a Promotion
+        This endpoint will activate a Promotion
+        """
+        app.logger.info('Request to deactivate promotion with id: %s', promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if promotion is None:
+            abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
+
+        promotion.active = False
+        promotion.update()
+        return promotion.serialize(), status.HTTP_200_OK
+
+######################################################################
 # Health check for Kube
 ######################################################################
 @app.route("/health", methods=["GET"])
@@ -272,39 +320,3 @@ def check_health():
         ),
         status.HTTP_200_OK,
     )
-
-######################################################################
-# Action Endpoint to Activate the Resource
-######################################################################
-@app.route("/promotions/<int:promotion_id>/activate", methods=["PUT"])
-def activate_promotion(promotion_id):
-    """
-        Activate a Promotion
-        This endpoint will activate a Promotion
-    """
-    app.logger.info('Request to activate promotion with id: %s', promotion_id)
-    promotion = Promotion.find(promotion_id)
-    
-    if promotion == None:
-        abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
-
-    promotion.active = True
-    promotion.update()
-    return promotion.serialize(), status.HTTP_200_OK
-
-######################################################################
-# Action Endpoint to Deactivate the Resource
-######################################################################
-@app.route("/promotions/<int:promotion_id>/deactivate", methods=["PUT"])
-def deactivate_promotion(promotion_id):
-    """
-        Deactivate a Promotion
-        This endpoint will deactivate a Promotion
-    """
-    app.logger.info('Request to deactivate promotion with id: %s', promotion_id)
-    promotion = Promotion.find(promotion_id)
-    if promotion == None:
-        abort(status.HTTP_404_NOT_FOUND, "Promotion with id '{}' was not found".format(promotion_id))
-    promotion.active = False
-    promotion.update()
-    return promotion.serialize(), status.HTTP_200_OK
