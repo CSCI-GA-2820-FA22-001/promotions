@@ -10,6 +10,7 @@ from service.common import status  # HTTP Status Codes
 from flask_restx import Api, Resource, fields, reqparse, inputs
 from . import app  # Import Flask application
 from werkzeug.exceptions import NotFound
+from datetime import datetime
 
 ######################################################################
 # Configure the Root route before OpenAPI
@@ -308,6 +309,30 @@ class DeactivateResource(Resource):
         promotion.active = False
         promotion.update()
         return promotion.serialize(), status.HTTP_200_OK
+
+######################################################################
+#  CANCEL A PROMOTION - /promotions/{id}/cancel
+######################################################################
+@api.route("/promotions/<int:promotion_id>/cancel")
+@api.param('promotion_id', 'The Promotion identifier')
+class PromotionCancellation(Resource):
+    @api.doc('cancel_promotions')
+    @api.response(404, 'Promotion not found')
+    @api.response(200, 'Promotion cancelled')
+    def post(self, promotion_id):
+        """
+        Cancels a single Promotion
+        This endpoint will cancel a Promotion based on it's id
+        """
+        app.logger.info("Request to cancel Promotion with id: %s", promotion_id)
+        promotion = Promotion.find(promotion_id)
+        if not promotion:
+            raise NotFound("Promotion with id '{}' was not found.".format(promotion_id))
+        promotion.end_date = datetime.now()
+        promotion.update()
+        app.logger.info("Promotion with ID [%s] cancelled", promotion_id)
+        return make_response("", status.HTTP_200_OK)
+
 
 ######################################################################
 # Health check for Kube

@@ -347,3 +347,25 @@ class TestPromotionRoutes(unittest.TestCase):
         )
 
         self.assertEqual(resp_deactivate.status_code, status.HTTP_404_NOT_FOUND)
+
+
+def test_cancel_promotion(self):
+    """ Cancel a promotion """
+
+    # try to cancel it before it's in there
+    resp = self.app.post(
+        "/promotions/{}/cancel".format(1), content_type="application/json"
+    )
+    self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    # create a new promotion
+    test_promotion = self._create_promotions(1)[0]
+
+    # cancel the promotion
+    resp = self.app.post(
+        "/promotions/{}/cancel".format(test_promotion.id),
+        content_type="application/json",
+    )
+
+    # if it gets 200 status, we pass
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
