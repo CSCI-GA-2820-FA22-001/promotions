@@ -94,16 +94,10 @@ Scenario: Delete Promotions
     When I visit the "Home Page"
     And I set the "Name" to "bogo2"
     And I press the "Search" button
-    When I copy the "Id" field
-    And I press the "Clear" button
-    And I paste the "Id" field
     And I press the "Delete" button
     Then I should see the message "promotion has been Deleted!"
     When I set the "Name" to "prct3"
     And I press the "Search" button
-    When I copy the "Id" field
-    And I press the "Clear" button
-    And I paste the "Id" field
     And I press the "Delete" button
     Then I should see the message "promotion has been Deleted!"
     When I press the "Clear" button
@@ -119,9 +113,6 @@ Scenario: ACTION: Activate/Deactive Promotions
     Then I should see the message "Promotion id must be set"
     When I set the "Name" to "bogo2"
     And I press the "Search" button
-    When I copy the "Id" field
-    And I press the "Clear" button
-    And I paste the "Id" field
     And I press the "Activate" button
     Then I should see the message "De-activated"
     When I press the "Activate" button
