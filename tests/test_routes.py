@@ -361,3 +361,4 @@ class TestPromotionRoutes(unittest.TestCase):
         print(resp.__dir__())
         print(resp.get_json())
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
