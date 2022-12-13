@@ -264,6 +264,7 @@ class TestPromotionRoutes(unittest.TestCase):
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
         resp = self.app.put("/promotions", json={"not": "today"})
+        self.assertEqual(resp.json['message'], "The method is not allowed for the requested URL.")
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_unsupported_media_type(self):
@@ -348,24 +349,16 @@ class TestPromotionRoutes(unittest.TestCase):
 
         self.assertEqual(resp_deactivate.status_code, status.HTTP_404_NOT_FOUND)
 
+    # ---------------------------------------------------------------
+    # > Test Cases for Error Handlers                              <
+    # ---------------------------------------------------------------
 
-    def test_cancel_promotion(self):
-        """ Cancel a promotion """
-
-        # try to cancel it before it's in there
+    def test_invalid_content_type(self):
+        """ Test Invalid Content Type """
         resp = self.app.post(
-            "/promotions/{}/cancel".format(1), content_type="application/json"
+            "/promotions", json="This is a string", content_type="text/html"
         )
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        print(resp.__dir__())
+        print(resp.get_json())
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-        # create a new promotion
-        test_promotion = self._create_promotions(1)[0]
-
-        # cancel the promotion
-        resp = self.app.post(
-            "/promotions/{}/cancel".format(test_promotion.id),
-            content_type="application/json",
-        )
-
-        # if it gets 200 status, we pass
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
