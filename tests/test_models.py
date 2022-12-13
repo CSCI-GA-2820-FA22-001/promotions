@@ -5,7 +5,7 @@ Test cases for Promotion Model
 import logging
 import os
 import unittest
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from itertools import product
 
 from service import app
@@ -67,12 +67,6 @@ class TestPromotion(unittest.TestCase):
         self.assertIsNotNone(prom.id)
         promos = Promotion.all()
         self.assertEqual(len(promos), 1)
-
-
-        prom2 = Promotion(name="Promo2",product_id=2,type=PromotionType.PERCENTAGE,value=20,active=True,)
-        prom2.create()
-        self.assertEqual(prom2.start_date.date(), date.today())
-        self.assertEqual(prom2.expiration_date.date(), date.today() + timedelta(days=9))
 
         prom = Promotion(name="Prom",product_id=None,type=PromotionType.PERCENTAGE,value=20,active=True,
         start_date = datetime(2022, 11, 10), expiration_date = datetime(2022, 11, 20))
@@ -150,15 +144,6 @@ class TestPromotion(unittest.TestCase):
         self.assertEqual(prom.value,10)
         self.assertEqual(prom.start_date,datetime(2022, 12, 10))
         self.assertEqual(prom.expiration_date,datetime(2022, 12, 20))
-        
-        #test invalid dates
-        data2 = prom.serialize()
-        data2["start_date"]= "not a date"
-        self.assertRaises(DataValidationError, prom.deserialize, data2)
-        data2["start_date"]=datetime(2022, 12, 10)
-        data2["expiration_date"]= "not a date"
-        self.assertRaises(DataValidationError, prom.deserialize, data2)
-
 
         #test invalid deserial:
         invalid_data = "..."
@@ -175,17 +160,6 @@ class TestPromotion(unittest.TestCase):
         start_date = datetime(2022, 5, 10), expiration_date = datetime(2022, 5, 20))
         data= prom.serialize()
         self.assertRaises(DataValidationError, prom.deserialize, data)
-
-    def test_is_available(self):
-        prom = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True,
-        start_date = date.today(), expiration_date = date.today() + timedelta(days = 9))
-
-        self.assertEqual(True, prom.is_available())
-
-        prom2 = Promotion(name="Promo2",product_id=2,type=PromotionType.BOGO,value=20,active=True,
-        start_date = date.today() - timedelta(days = 18), expiration_date = date.today() - timedelta(days = 9))
-
-        self.assertEqual(False, prom2.is_available())
 
     def test_find_promos(self):
         prom1 = Promotion(name="Promo1",product_id=1,type=PromotionType.BOGO,value=20,active=True,
