@@ -41,7 +41,7 @@ Scenario: Create a Promo
     And I should see "False" in the "ACTIVE" dropdown
     And I should see "2022-06-16" in the "start" field
 
-Scenario: List all pets
+Scenario: List all promotions
     When I visit the "Home Page"
     And I press the "Search" button
     Then I should see the message "Success"

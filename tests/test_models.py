@@ -159,6 +159,11 @@ class TestPromotion(unittest.TestCase):
         data2["expiration_date"]= "not a date"
         self.assertRaises(DataValidationError, prom.deserialize, data2)
 
+        #test improper type
+        data["type"] = "not a type"
+        self.assertRaises(DataValidationError, prom.deserialize, data)
+        
+
 
         #test invalid deserial:
         invalid_data = "..."
