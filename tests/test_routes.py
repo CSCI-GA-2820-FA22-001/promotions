@@ -264,6 +264,7 @@ class TestPromotionRoutes(unittest.TestCase):
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
         resp = self.app.put("/promotions", json={"not": "today"})
+        self.assertEqual(resp.json['message'], "The method is not allowed for the requested URL.")
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_unsupported_media_type(self):
@@ -347,3 +348,16 @@ class TestPromotionRoutes(unittest.TestCase):
         )
 
         self.assertEqual(resp_deactivate.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ---------------------------------------------------------------
+    # > Test Cases for Error Handlers                              <
+    # ---------------------------------------------------------------
+
+    def test_invalid_content_type(self):
+        """ Test Invalid Content Type """
+        resp = self.app.post(
+            "/promotions", json="This is a string", content_type="text/html"
+        )
+        print(resp.__dir__())
+        print(resp.get_json())
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
